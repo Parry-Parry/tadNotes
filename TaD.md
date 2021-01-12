@@ -226,9 +226,10 @@ A corpus creator should create a datasheet or data statement for each corpus con
 - Language Variety : What language \(including dialect/region\) was the corpus in?
 - Speaker Demographics : What was, e.g., age or gender of the authors of the text?
 - Collection Process : How big is the data? If it is a subsample how was it sampled? Was the data collected with consent? How was the data pre-processed, and what metadata is available?
-_metadata_ : data that describes other data
 - Annotation Process : What are the annotations, what are the demographics of the annotators, how were they trained, how was the data annotated?
 - Distribution : Are there copyright or other intellectual property restrictions?
+
+_metadata_ : data that describes other data
 
 ### Text Normalization
 
@@ -239,10 +240,119 @@ Before almost any natural language processing of a text, the text has to be norm
 - Segmenting Sentences
 
 
+*Unix Commands*
+- tr : systemically change specific characters in an input
+- sort : sorts input in alphabetical order
+- uniq : collapses and counts identical lines 
 
+_Refer to 2.4.1 for an extensive example of these commands_
 
+Often punctuation is broken off into a seperate token. Commas are a useful piece of information for parsers, periods help indicate sentence boundaries. Punctuation that occurs in word such as 'Ph.D' is kept. Special characters are often kept such as '$49.99' as well as numbers as we wouldnt want to split that price into '$, 49, 99'.
 
+In English we split numbers every 3 digits with punctuation so we must consider these cases when tokenizing.
 
+Tokenizing can assist with clitic contractions such as expanding 'They're' to 'They are'.
+
+_clitic_ : part of a word that cannot stand on its on only occuring as a part of another word
+
+*named entitity recognition* : detecting names, dates and organizations
+
+*Penn Treebank tokenization standard* : used for the treebanks released by the LDC
+
+_treebank_ : parsed corpora
+
+_LDC_ :  Linguistic Data Consortium, a source of useful datasets
+
+_The standard method for tokenization is to use deterministic algorithms based on regex compiled into efficient finite state automata_
+
+*Hanzi* : Characters in the Chinese language
+
+_Chinese NLP tasks take characters rather than words as input as meaning can be derived with less ambiguity and with smaller dictionaries_
+
+_For Japanese and Thai NLP tasks characters do not offer enough semantic meaning so word segmentation is required_
+
+NLP algorithms often use one training corpus then use facts derived to make decisions about a seperate test corpus and its language.
+
+_In modern tokenization most tokens are words but some are frequently occuring morphemes_ 
+
+*Token learner* : takes a raw training corpus \(sometimes roughly pre-separated into words, for example by whitespace\) and induces a vocabulary, a set of tokens
+
+*Token segementer* : takes a raw test sentence and segments it into the tokens in the vocabulary
+
+*Common tokenization algorithms*
+- byte-pair encoding
+- unigram language modeling
+- WordPiece
+- SentencePiece : uses BPE and ULM
+
+*Byte-pair encoding*
+
+The BPE token learner begins with a vocabulary that is just the set of all individual characters. It then examines the training corpus, chooses two symbols that are the most frequently adjacent and adds a new new symbol that merges these two symbols replacing every occurence of these adjacent symbols with this new single merged symbol. It continues to count and merge creating new and longer character strings until k merges have been done creating k novel tokens. The resulting vocabulary consists of the original set of individual characters plus k new symbols.
+
+_Once we have 'learned' our vocabulary the token parser is used to tokenize a test sentence running on the test data with the merges we have learned in the order we learned them._
+
+In real instance of BPE there are thousands of merges on a very large input corpus, the result yeild mostly full words with only rare occurences being represented by their parts.
+
+*Word normalization* : putting words/tokens into a standard format
+
+_A single normal form is chosen, this standardization may be valuable, despite the spelling information that is lost in the normalization process_
+
+*Case folding* : mapping everything to lower case
+
+Case folding is helpful for generalization in tasks such as information retrieval and speech recognition. For sentiment analysis and other text classification tasks case can be helpful thus case folding is not usually done. This is done because maintaining the difference between for example 'US' the country_and 'us' the pronoun can outweigh the advantage of generalization that case folding would provide for other words.
+
+*morphological parsing* : parsing words into morphenes, stems and affixes
+
+_affixes_ : additions to a word to add meaning e.g adding 's' as a suffix to mean plural
+
+*cascade* : when the output of an algorithm pass is fed in as the next input
+
+*Cues for sentence segmentation*
+- punctuation
+- question marks and exclamation points
+
+_Periods can be ambiguous as they can represent a sentence boundary marker or an abbriviation or both_
+
+In general sentence tokenization methods work by first deciding whether a period is part of a word or a sentence boundary. An abbreviation dictionary can help determine whether a period is part of a common abbreviation.
+
+*Minimum edit distance* : the minimum number of editing operations \(insertion, deletion and substution\) needed to transform one string to another
+
+*alignment* : given two sequences, the correspondence between substring of the two sequences
+
+*Example operation list*
+- d : deletion
+- i : insertion
+- s - substitution
+
+_This is used to expres how we convert one string to another._
+
+### Minimum Edit Distance
+
+*Coreference* : Deciding whether two strings refer to the same entity
+
+*Levenshtein distance* : the simplest weighting factor in which each of the three aformentioned operations has a cost of 1.
+
+*Dynamic programming* : a class of algorithms that apply a table-driven method to solve problems by combining solutions to sub-problems.
+
+*Minimum edit distance algorithm* : a dynamic programming algorithm that finds the minimum edit distance by combining the edit distances recursively from the empty string to the longest of the two strings.
+
+_A psudocode implementation can be found at 2.5.1_
+
+*Parallel corpus* : a corpus with a text in two languages
+
+*Backtrace* : Start from the last cell in a distance matrix and follow pointers back to the empty string, each complete path is a minimum distance alignment.
+
+*Viterbi* : A probibalistic extension of minimum distance, computing te maximum probability alignment instead of the minimum edit distance. _Discussed further in chapter 8._
+
+### Summary
+
+_Direct Copy_
+
+- The regular expression language is a powerful tool for pattern-matching.
+- Basic operations in regular expressions include concatenation of symbols, disjunction of symbols \(\[\], \|, and .\), counters\(\*,+, and\{n,m\}\), anchors\(ˆ,$\) and precedence operators \(\(,\)\)
+- Word tokenization and normalization are generally done by cascades of simple regular expression substitutions or finite automata.
+- The Porter algorithm is a simple and efficient way to do stemming, stripping off affixes. It does not have high accuracy but may be useful for some tasks.
+- The minimum edit distance between two strings is the minimum number of operations it takes to edit one into the other. Minimum edit distance can becomputed by dynamic programming, which also results in an alignment of the two strings.
 
 # Lectures
 
@@ -253,8 +363,9 @@ Before almost any natural language processing of a text, the text has to be norm
 *Text Processing as a Pipeline*
 - download web page, strip html if necessary, trim to desired content
 - tokenize the text, select tokens of interest, create an NLTK text
-_NLTK_ : Natural Language ToolKit
 - normalize the words, build the vocabulary
+
+_NLTK_ : Natural Language ToolKit
 
 Words aren't the only unit for tokenising, sometimes "n-grams" can be useful too. These can be obtained by passing a sliding window over a token stream. Different n-gram indexing can be achieved using sliding windows of larger sizes.
 
@@ -302,6 +413,10 @@ _Hash collisions are typically dealt with by using freed-up memory to increase t
 
 *Overlap coefficient* : Intersection divided by the size of smallest set
 
+*Dice Similarity* : The intersection of the two sets mulitplied by 2, divided by the sum of the cardinality of the two sets
+
+_cardinality_ : the number of elements in a set
+
 *Jaccard Similarity* : the size of the intersection divided by the size of the union of the sample sets
 
 *Summary*
@@ -316,3 +431,14 @@ _Hash collisions are typically dealt with by using freed-up memory to increase t
 ### Pre-recorded Lecture
 
 Twitter trending does not just look at what are the most popular terms right now but instead the terms that are being spoken about more than previously.
+
+*Indentifying what a text is about*
+- Important 'key' words
+- Entities
+- Properties of a person
+- Things
+- Actions
+
+_Filler words do not give context_
+
+_Generally ignore URLs_
