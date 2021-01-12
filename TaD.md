@@ -8,7 +8,7 @@
 
 *web-based question answering* : generalization of simple Web search, where instead of just typing keywords, a user might ask complete questions
 
-###Answering Questions
+### Answering Questions
 
 *speech recognition/speech synthesis* : requires phonetics and phonology 
 
@@ -229,3 +229,90 @@ A corpus creator should create a datasheet or data statement for each corpus con
 _metadata_ : data that describes other data
 - Annotation Process : What are the annotations, what are the demographics of the annotators, how were they trained, how was the data annotated?
 - Distribution : Are there copyright or other intellectual property restrictions?
+
+### Text Normalization
+
+Before almost any natural language processing of a text, the text has to be normalized. At least three tasks are commonly applied as part of any normalization process:
+
+- Tokenizing words
+- Normalizing word formats
+- Segmenting Sentences
+
+
+
+
+
+
+
+# Lectures
+
+## Lecture 1 
+
+### Slides
+
+*Text Processing as a Pipeline*
+- download web page, strip html if necessary, trim to desired content
+- tokenize the text, select tokens of interest, create an NLTK text
+_NLTK_ : Natural Language ToolKit
+- normalize the words, build the vocabulary
+
+Words aren't the only unit for tokenising, sometimes "n-grams" can be useful too. These can be obtained by passing a sliding window over a token stream. Different n-gram indexing can be achieved using sliding windows of larger sizes.
+
+*Morphemes* : The small meaningful units that make up words
+
+_Outcome of stemming may not be a word, instead will group similar words_
+
+_Lemmatization is slower than stemming due to word lookup being required_
+
+*one-hot encoding* : A vector that represents a text as a set of its terms, 1 if a term occurs, 0 if not
+
+_The vectors for one-hot encoding all have \|V\| dimensions being the number of unique normalized tokens in the vocabulary for the corpus_
+
+*What do we need to transform documents from a stream of tokens into a one-hot encoding?*
+- know for each term, what its offset is in the dictionary / vocabulary
+- The dimension of the vector, i.e. the size of the map
+
+_If a new word is found in a text it is either added to the dictionary or in the case of the dictionary being frozen it is considered out-of-vocabulary_
+
+_Can save space by only storing the id of terms that occur in a text rather than all in the vocabulary_
+
+*Large Dictionary Solutions*
+- Ommit rare words
+- Hash the dictionary directly mapping words to vector indices of a fixed size
+
+_Hash collisions are typically dealt with by using freed-up memory to increase the number of hash buckets_
+
+*Handling OOV Words*
+- Observation: Most unseen words are new morphological forms (or numbers)
+- Wordpiece tokenization breaks words into “subword” pieces
+- Learn common patterns from a large corpus of text
+
+*Many text applications are based on comparing the similarity of pieces of text*
+- grouping together tweets or news articles about the same event
+- identifying documents similar to a user's query
+
+*similarity measure* : a function that computes the degree of similarity between a pair of vectors
+
+*Why set-based similarity?*
+- Works well for small texts
+- trivial to compute with basic data structures
+- there are fast and efficient approximations
+
+*Matching coefficient* : Number of terms (dimensions) that are both are non-zero
+
+*Overlap coefficient* : Intersection divided by the size of smallest set
+
+*Jaccard Similarity* : the size of the intersection divided by the size of the union of the sample sets
+
+*Summary*
+- There are a plethora of text mining applications
+- Text mining starts with representations of the words in the text, e.g. one-hot encoding 
+- Examined set-based similarity measures
+
+*Outstanding issues:*
+- similarity is based on sets and doesn’t use counts
+- Not all words are equally useful or discriminative. In the next lecture, we'll discuss statistical techniques that can identify the utility of words
+
+### Pre-recorded Lecture
+
+Twitter trending does not just look at what are the most popular terms right now but instead the terms that are being spoken about more than previously.
