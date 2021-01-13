@@ -80,7 +80,7 @@ Many tools from ML apply in language processing, distinct training and test sets
 
 **Turing test** : an empirical test, a game, in which a computer’s use of language would form the basis for determining if the machine could think
 
-**explaination of the Turing test**
+**Explaination of the Turing test**
 
 There are three participants: two people and a computer. One of the people is a contestant who plays the role of an interrogator. To win, the interrogator must determine which of the other two participants is the machine by asking a series of questions via a teletype. The task of the machine is to fool the interrogator into believing it is a person by responding as a person would to the interrogator’s questions.The task of the second human participant is to convince the interrogator that the otherparticipant is the machine and that she is human.
 
@@ -242,7 +242,7 @@ Before almost any natural language processing of a text, the text has to be norm
 - Segmenting Sentences
 
 
-**Unix Commands*
+**Unix Commands**
 - tr : systemically change specific characters in an input
 - sort : sorts input in alphabetical order
 - uniq : collapses and counts identical lines 
@@ -281,7 +281,7 @@ _In modern tokenization most tokens are words but some are frequently occuring m
 
 **Token segementer** : takes a raw test sentence and segments it into the tokens in the vocabulary
 
-**Common tokenization algorithms*
+**Common tokenization algorithms**
 - byte-pair encoding
 - unigram language modeling
 - WordPiece
@@ -309,7 +309,7 @@ _affixes_ : additions to a word to add meaning e.g adding 's' as a suffix to mea
 
 **cascade** : when the output of an algorithm pass is fed in as the next input
 
-**Cues for sentence segmentation*
+**Cues for sentence segmentation**
 - punctuation
 - question marks and exclamation points
 
@@ -321,7 +321,7 @@ In general sentence tokenization methods work by first deciding whether a period
 
 **alignment** : given two sequences, the correspondence between substring of the two sequences
 
-**Example operation list*
+**Example operation list**
 - d : deletion
 - i : insertion
 - s - substitution
@@ -362,7 +362,7 @@ _Direct Copy_
 
 ### Slides
 
-**Text Processing as a Pipeline*
+**Text Processing as a Pipeline**
 - download web page, strip html if necessary, trim to desired content
 - tokenize the text, select tokens of interest, create an NLTK text
 - normalize the words, build the vocabulary
@@ -389,24 +389,24 @@ _If a new word is found in a text it is either added to the dictionary or in the
 
 _Can save space by only storing the id of terms that occur in a text rather than all in the vocabulary_
 
-**Large Dictionary Solutions*
+**Large Dictionary Solutions**
 - Ommit rare words
 - Hash the dictionary directly mapping words to vector indices of a fixed size
 
 _Hash collisions are typically dealt with by using freed-up memory to increase the number of hash buckets_
 
-**Handling OOV Words*
+**Handling OOV Words**
 - Observation: Most unseen words are new morphological forms (or numbers)
 - Wordpiece tokenization breaks words into “subword” pieces
 - Learn common patterns from a large corpus of text
 
-**Many text applications are based on comparing the similarity of pieces of text*
+**Many text applications are based on comparing the similarity of pieces of text**
 - grouping together tweets or news articles about the same event
 - identifying documents similar to a user's query
 
 **similarity measure** : a function that computes the degree of similarity between a pair of vectors
 
-**Why set-based similarity?*
+**Why set-based similarity?**
 - Works well for small texts
 - trivial to compute with basic data structures
 - there are fast and efficient approximations
@@ -421,7 +421,7 @@ _cardinality_ : the number of elements in a set
 
 **Jaccard Similarity** : the size of the intersection divided by the size of the union of the sample sets
 
-**Summary*
+**Summary**
 - There are a plethora of text mining applications
 - Text mining starts with representations of the words in the text, e.g. one-hot encoding 
 - Examined set-based similarity measures
@@ -434,7 +434,7 @@ _cardinality_ : the number of elements in a set
 
 Twitter trending does not just look at what are the most popular terms right now but instead the terms that are being spoken about more than previously.
 
-**Indentifying what a text is about*
+**Indentifying what a text is about**
 - Important 'key' words
 - Entities
 - Properties of a person
