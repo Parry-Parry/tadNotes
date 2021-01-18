@@ -356,8 +356,6 @@ _Direct Copy_
 - The Porter algorithm is a simple and efficient way to do stemming, stripping off affixes. It does not have high accuracy but may be useful for some tasks.
 - The minimum edit distance between two strings is the minimum number of operations it takes to edit one into the other. Minimum edit distance can becomputed by dynamic programming, which also results in an alignment of the two strings.
 
-# Lectures
-
 ## Lecture 1 
 
 ### Slides
@@ -444,3 +442,385 @@ Twitter trending does not just look at what are the most popular terms right now
 _Filler words do not give context_
 
 _Generally ignore URLs_
+
+# Introduction to Information Retrieval
+### Chapter 5
+
+**Benefits of Compression**
+- increased use of caching
+
+Search systems use some parts of the dictionary and the index much more than others, if we cache cache the postings list of a frequently used query term t, then the computations necessary for respondingto the one-term query t can be entirely done in memory.
+
+_There are simple and efficient decompression methods, so that the penalty of having to decompress the postings list is small._
+
+Because memory is a more expensive resource than disk space, increased speed owing to caching – rather than decreased space requirements – is often the prime motivator for compression.
+
+- faster transfer of data from disk to memory
+
+Efficient decompression algorithms run so fast on modern hardware that the total time of transferring a compressed chunk of data from disk and then decompressing it is usually less than transferring the same chunk of data in uncompressed form.
+
+We can reduce input/output  \(I/O\)  time by loading a much smaller compressed postings list, even when you add on the cost of decompression. 
+
+_For  improved cache utilization and faster disk\-to\-memory transfer, decompression speeds must be high_
+
+**posting** : a docID in a postings list
+
+_Postings in most search systems also contain frequency and position information_
+
+#### Statistical properties of terms in information retrieval
+
+**∆%** : the reduction in size from the line previous in a text
+**T%** : the cumulative reduction from unfiltered
+
+**Table of a Model**
+- shows the number of terms for different levels of preprocessing
+- number of terms is the main factor in determining the size of the dictionary
+- number of nonpositional postings is an indicator of the expected size of the nonpositional index of the collection
+- The expected size of a positional index is related to the number of positionsit must encode
+
+**Effects of operations**
+- Preprocessing affects the size of the dictionary and the number of nonpositional postings greatly
+- Stemming and case folding reduce the  number of \(distinct\) terms by 17% eachand the number of nonpositional postings by 4% and 3%, respectively.
+
+**rule of 30** : the 30 most common words account for 30% of the tokens in written text
+
+Eliminating the 150 most common words from indexing cuts 25% to 30% of the nonpositional postings. Although a stop list of 150 words reduces the number of postings by a quarter or more, this size reduction does not carry over to the size of the compressed index.
+
+_The postings lists of frequent words require only a few bits per posting after compression_
+
+**Compression Techniques**
+- _loseless_ : all information is preserved
+- _lossy_ : better compression ratios than loseless but discards some information
+
+**Lossy**
+
+- Case folding, stemming, and stop word elimination are forms of lossy compression
+- Lossy compression makes sense when the “lost” information is unlikely ever to be used by the search system
+
+_stop word_ : a word that is not indexed
+
+- For example, web search is characterized by a large number of documents, short queries, and users who only look at the first few pages of results 
+- As a consequence, we can discard postings ofdocuments that would only be used for hits far down the list 
+- Thus, there are retrieval scenarios where lossy methods can be used for compression withoutany reduction in effectiveness
+
+#### Heaps’ law: Estimating the number of terms
+
+**Heaps’ law** : estimates vocabulary size as a function of collection size
+
+M = kT<sup>b</sup>
+
+- M : number of distinct terms in a collection
+- T : number of tokens in the collection
+- k & b : parameters with typical values 30 ≤ k ≤ 100 and b≈0.5
+
+- Heaps’ law is that the simplest possible relationship between collection size and vocabulary size is linear in log–log space
+- The parameter _k_ is quite variable because vocabulary growth depends alot on the nature of the collection and how it is processed
+- Case\-folding and stemming reduce the growth rate of the vocabulary, whereas including numbers and spelling errors increase it
+
+**Heaps’ law suggests that:**
+- the dictionary size continues to increase with more documents in the collection, rather thana maximum vocabulary size being reached
+- the size of the dictionary is quite large for large collections
+
+#### Zipf’s law: Modeling the distribution of terms
+
+**Zipf’s law** :  if t<sub>1</sub> is the most common term in the collection, t<sub>2</sub> is the next most common, and so on, then the collection frequency c<sub>fi</sub> of the ith most common term is proportional to 1/i.
+
+cf<sub>i</sub> ∝ 1/i
+
+- if the most frequent term occurs cf<sub>1</sub> times
+- the second most frequent term has half as many occurrences
+- the third most frequent term a third as many occurrences, and so on
+
+_The intuition is that frequency decreases very rapidly with rank._
+
+#### Dictionary compression
+
+- One of the primary factors in determining the response time of an IR system is the number of disk seeks necessary to process a query
+- If parts of the dictionary are on disk, then many more disk seeks are necessary in query evaluation
+
+_Thus, the main goal of compressing the dictionary is to fit it in main memory, or at least a large portion of it, to support high query throughput._
+
+Although dictionaries of very large collections fit into the memory of a standard desktop machine, this is not true of many other application scenarios
+- We want to be able to design search systems for limited hardware such as mobile phones and onboard computers
+- Other reasons for wanting to conserve memory are fast startup time and having to share resources with other applications
+
+#### Dictionary as a string
+
+_The simplest data structure for the dictionary is to sort the vocabulary lexicographically and store it in an array of fixed\-width entries:_
+- We allocate 20 bytes for the term itself
+- 4 bytes for its document frequency
+- 4 bytes for the pointer to its postings list
+
+_Four-byte pointers resolve a 4 gigabytes address space._
+
+_Using fixed-width entries for terms is clearly wasteful._
+
+- The average length of a term in English is about eight characters
+- On average we are wasting twelve characters in the fixed\-width scheme
+- We have no way of storing terms with more than twenty characters
+
+_We can overcome these shortcomings by storing the dictionary terms as one long string of characters._
+
+- The pointer to the next term is also used to demarcate the end of the current term
+- we locate terms in the datastructure by way of binary search in the \(now smaller\) table
+
+_This scheme saves us 60% compared to fixed\-width storage._
+
+#### Blocked storage
+
+- We can further compress the dictionary by grouping terms in the string into blocks of size k and keeping a term pointer only for the first term of each block
+- We store the length of the term in the string as an additional byte at the beginning of the term
+- We thus eliminate k−1 term pointers, but need an additional k bytes for storing the length of each term
+
+- By increasing the block size k, we get better compression
+- However, there is a tradeoff between compression and the speed of term lookup
+
+_We search for terms in the un\-compressed dictionary by binary search_
+- In the compressed dictionary, we first locate the term’s block by binary search and then its position within the list by linear search through the block 
+- Searching the uncompressed dictionary takes on average 1.6 steps
+
+_By increasing k,  we can get the size of the compressed dictionary arbitrarily close to the minimum but term lookup becomes prohibitively slow for large values of k._
+
+**front coding** : A sequence of terms with identical prefix \(“automat”\) is encoded by marking the end of the prefix with ∗ and replacing it with ⋄ in subsequent terms. As before, the first byte of each entry encodes the number of characters
+
+**minimal perfect hashing** : a hash function that maps M terms onto \[1, ..., M\] without collisions
+
+_However, we cannot adapt perfect hashes incrementally because each new term causes a collision and therefore requires the creation of a new perfect hash function. Therefore, they cannot be used in a dynamic environment._
+
+- It may  not be feasible to store the entire dictionary in main memory for very large text collections and for hardware with limited memory
+- If we have to partition the dictionary onto pages that are stored on disk, then we can index the first term of each page using a B-tree
+- For processing most queries, the search system has to go to disk anyway to fetch the postings
+- One additional seek for retrieving the term’s dictionary page from disk is a significant, but tolerable increase in the time it takes to process a query
+
+#### Postings file compression
+
+- Document identifiers are log<sub>2</sub>800,000≈20 bits long
+
+To devise a more efficient representation of the postings file, one that uses fewer than 20 bits per document, we observe that the postings for frequent terms are close together.
+
+- The key idea is that the gaps between postings are short, requiring alot less space than 20 bits to store
+- In fact, gaps for the most frequent terms such as _the_ and _for_ are mostly equal to 1
+- Gaps for a rare term have the same order of magnitude as the docIDs and need 20 bits
+
+To encode small numbers in less space than large numbers, we look at two types of methods:
+- bytewise compression
+- bitwise compression
+
+_These methods attempt to encode gaps with theminimumnumber of bytes and bits, respectively._
+
+#### Variable byte codes
+
+**Variable byte (VB) encoding** : uses an integral number of bytes to encode a gap
+
+- The last 7 bits of a byte are “payload” and encode part of the gap
+- The first bit of the byte is a continuation bit
+- It is set to 1 for the last byte of the encoded gap and to 0 otherwise
+
+To decode a variable byte code, we reada sequenceof bytes with continuation bit 0 terminated by a byte with continuation bit 1. We then extract and concatenate the 7-bit parts.
+
+_The idea of VB encoding can also be applied to larger or smaller units than bytes._
+
+- Larger words further decrease the amount of bit manipulation necessary at the cost of less effective \(or no\) compression
+- Word sizes smaller than bytes get even better compression ratios at the cost of more bit manipulation
+- In general, bytes offer a good compromise between compression ratio and speed of decompression
+
+If disk space is a scarce resource, we can achieve better compression ratios by using bit-level encodings
+
+#### γ codes
+
+- **Bit\-level codes** adapt the length of the code on the finer grained bit level
+- The simplest bit\-level code is **unary code**
+
+_The unary code of n is a string of n 1s followed by a 0_
+
+**γ encoding** : variable\-length encoding by splitting the representation of a gap G into a pair oflength and offset
+
+- Offset is G in binary, but with the leading 1 removed
+- Length encodes the length of offset in unary code
+
+- A γ code is decoded by first reading the unary code up to the 0 that terminates it
+- γ codes are always of odd length and they are within a factor of 2 of what we claimed to be the optimal encoding length log<sub>2</sub>G
+
+The characteristic of a discrete probability distribution P that determines its coding properties \(including whether a code is optimal\)is its entropy H\(P\)
+
+H\(P\) = -ΣP\(x\)log<sub>2</sub>P\(x\) for x in X
+
+- Where X is the set of all possible numbers we need to be able to encode
+- Entropy is a measure of uncertainty for a probability distribution P over two possible outcomes
+
+- Entropy is maximized \(H\(P\) = 1\) for P\(x<sub>1</sub>\) = P\(x<sub>2</sub>\) = 0.5 when uncertainty about which x<sub>i</sub> will appear next is largest
+
+- Entropy is minimized \(H\(P\) = 0\) for P\(x<sub>1</sub>\) = 1, P\(x<sub>2</sub>\) = 0 and for P\(x<sub>1</sub>\) = 0, P\(x<sub>2</sub>\) = 1 when there is absolute certainty
+
+A code like γ code with the property of being within a factor of optimal for an arbitrary distribution P is called universal.
+
+In addition to universality, γ codes have two other properties that are useful for index compression:
+- They are prefix free, namely, no γ code is the prefix of another
+
+_There is always a unique decoding of a sequence of γ codes – and we do not need delimiters between them._
+
+- The second property is that γ codes are parameter free
+
+_For many other efficient codes, we have to fit the parameters of a model to the distribution of gaps in the index._
+
+- Many bit\-level operations – shifts and masks – are necessary to de\-code a sequence of γ codes as the boundaries between codes will usually be somewhere in the middle of a machine word
+- As a result, query processing is more expensive for γ codes than for variable byte codes
+
+### Chapter 6
+
+#### Parametric and zone indexes
+
+- The possible values of a field should be thought of as finite 
+- There is one parametric index for each field
+
+_parametric index_ : an index that allows retrieval of documents based on the values of parameters
+
+- Zones are similar to fields, except the contents of a zone can be arbitrary free text
+- Document titles and abstracts are generally treated as zones
+- The dictionary for a parametric index comes from a fixed vocabulary, the dictionary for a zone index must structure whatever vocabulary stems from the text of that zone
+- We can reduce the size of the dictionary by encoding the zone in which a term occurs in the postings
+
+#### Weighted zone scoring
+
+- Given a Boolean query _q_ and a document _d_, weighted zone scoring assigns to the pair \(q,d\) a score in the interval \[0, 1\], by computing a linear combination of zone scores
+- Each zone of the document contributes a Boolean value
+
+For ℓ zones the weighted zone score is defined as:
+
+Σg<sub>i</sub>s<sub>i</sub> for i in range \(1, ℓ\)
+
+_Weighted zone scoring is sometimes referred to also as ranked Boolean retrieval._
+
+Implementing the computation of weighted zone scores
+- directly from inverted indexes
+- One algorithm treats the case when the query<sub>q</sub> is a two-term query consisting of query terms q<sub>1</sub> and q<sub>2</sub>, and the Boolean function is AND: 1 if both query terms are present in a zone and 0 otherwise
+- We now  compute a score for each such document
+- Some literature refers to the array scores\[\] above as a set of accumulators
+
+#### Learning weights
+
+**machine\-learned relevance** : a general class of approaches to scoring and ranking in information retrieval
+
+- We are provided with a set of training examples, each of which is a tuple consisting of a query _q_ and a document _d_, together with a relevance judgment for _d_ on _q_ 
+
+_In the simplest form, each relevance judgments is either Relevant or Non\-relevant._
+
+- The weights g<sub>i</sub> are then “learned” from these examples, in order that the learned scores approximate the relevance judgments in the training examples
+
+- For weighted zone scoring, the process may be viewed as learning a linear function of the Boolean match scores contributed by the various zones
+- The expensive component of this methodology is the labor\-intensive assembly of user\-generated relevance judgments from which to learn the weights, especially in a collection that changes frequently
+
+The total error of a set of training examples is given by:
+
+Σε\(g, Φ<sub>j</sub>\) in range (0, j)
+
+- g is a constant between 0 and 1
+- Where Φ\(training example\) is a triple of the form Φ<sub>j</sub> = \(d<sub>j</sub>, q<sub>j</sub>, r\(d<sub>j</sub>, q<sub>j</sub>\)\)
+- Each training example has two boolean variables, s<sub>T</sub>\(d,q\) and s<sub>B</sub>\(d,q\)
+
+score\(d,q\) =g·s<sub>T</sub>\(d,q\) + \(1−g\)s<sub>B</sub>\(d,q\) to determine the relavance of d to q
+
+- The function r\(\) is a relevance judgment
+
+The problem of learning the constant _g_ from the given training examples then reduces to picking the value of _g_ that minimizes the total error
+
+#### The optimal weight g
+
+- We begin by noting that for any training example Φ<sub>j</sub> for which s<sub>T</sub>(d<sub>j</sub>, q<sub>j</sub>) = 0 and s<sub>B</sub>(d<sub>j</sub>, q<sub>j</sub>) = 1, the score computed is equal to g \- 1
+
+- Let n<sub>01r</sub>\(respectively, n<sub>01n</sub>\)  denote  the  number  of  training  examples for which s<sub>T</sub>(d<sub>j</sub>, q<sub>j</sub>) = 0 and s<sub>B</sub>(d<sub>j</sub>, q<sub>j</sub>) = 1
+- the editorial judgment is Relevant \(respectively, Non\-relevant\)
+- Then the contribution to the total error from training examples for which s<sub>T</sub>(d<sub>j</sub>, q<sub>j</sub>) = 0 and s<sub>B</sub>(d<sub>j</sub>, q<sub>j</sub>) = 1 is:
+
+\[1−\(1−g\)\]<sup>2</sup>n<sub>01r</sub> + \[0−\(1−g\)\]<sup>2</sup>n<sub>01n</sub>
+
+By writing in similar fashion the error contributions from training examples of the other three combinations of values the total error is:
+
+\(n<sub>01r</sub> + n<sub>10n</sub>\)g<sup>2</sup> + \(n10r+n01n\)\(1−g\)<sup>2</sup> + n<sub>00r</sub> + n<sub>11n</sub>
+
+By differentiating with respect to g and setting the result to zero, it follows that the optimal value of g is:
+
+n<sub>10r</sub> + n<sub>01n</sub> / n<sub>10r</sub> + n<sub>10n</sub> + n<sub>01r</sub> + n<sub>01n</sub>
+
+_The last few equations and expressions have been the worst thing I have have ever had to write in markdown_
+
+#### Term frequency and weighting
+
+**free text query** :  a query in which the terms of the query are typed free form into the search interface, without any connecting search operators
+
+- We assign to each term in a document a weight for that term, that depends on the number of occurrences of the term in the document
+- We would like to compute a score between a query term _t_ and a document _d_, based on the weight of _t_ in _d_
+
+**term frequency** : the number of occurrences of term _t_ in document _d_, denoted tf<sub>t,d</sub>
+
+- For a document _d_, the set of weights determined by the tf weights above may be viewed as a quantitative digest of that document
+- In this view of a document, known in the literature as the bag of words model, the exact ordering of the terms in a document is ignored but the number of occurrences of each term is material
+
+#### Inverse document frequency
+
+Raw term frequency as above suffers from a critical problem : all terms are considered equally important when it comes to assessing relevancy on a query.
+
+**Collection Frequency** : the total number of occurrences of a term in the collection
+
+_The idea would be to reduce the tf weight of a term by a factor that grows with its collection frequency._
+
+**document frequency** : more commonly used than collection frequency, defined to be the number of documents in the collection that contain a term _t_, denoted df<sub>t</sub>
+
+_This is because in trying to discriminate between documents for the purpose of scoring it is better to use a document\-level statistic_
+
+We define the inverse document frequency of a term _t_ as follows:
+
+idf<sub>t</sub> = log\(df<sub>t</sub>\)
+
+_Thus the idf of a rare term is high, whereas the idf of a frequent term is likely to be low._
+
+#### Tf\-idf weighting
+
+We now combine  the definitions of term frequency and inverse documentfrequency, to produce a composite weight for each term in each document.
+
+The tf\-idf weighting scheme assigns to term _t_ a weight in document _d_ given by:
+
+tf\-idf<sub>t,d</sub> = tf<sub>t,d</sub> × idf<sub>t</sub>
+
+In other words, tf\-idf<sub>t,d</sub> assigns to term _t_ a weight in document _d_ that is:
+- highest when _t_ occurs many times within a small number of documents
+- lower when the term occurs fewer times in a document, or occurs in many documents
+- lowest when the term occurs in virtually all documents
+
+At this point, we may view each document as a vector with one component corresponding to each term in the dictionary, together with a weight for each componenent
+
+- For dictionary terms that do not occur in a document, this weight is zero
+- This vector form is crucial to scoring and ranking
+
+- As a firststep, we introduce the overlap score measure
+
+**Overlap Score Measure** : the score of a document _d_ is the sum, over all query terms, of the number of times each of the query terms occurs in _d_
+
+-  We can refine this idea so that we add up not the number of occurrences of each query term _t_ in _d_, but instead the tf-idf weight of each term in _d_
+
+Score\(q,d\) =∑tf-idf<sub>t,d</sub> for t∈q
+
+#### The vector space model for scoring
+
+**vector space model** : the representation of a set of documents as vectors in a common vector space
+
+This model is fundamental to a host of information retrieval operations ranging from scoring documents on a query, document classification and document clustering.
+
+#### Dot products
+
+- We  denote  by V\->\(d\)the  vector  derived  from  document _d_,  with  one  component in the vector for each dictionary term
+- The set of documents in a collection may be viewed as a set of vectors in a vector space, in which there is one axis for each term
+- This representation loses the relative ordering of the terms in each document
+
+To compensate for the effect of document length, the standard way of quantifying the similarity between two documents d<sub>1</sub> and d<sub>2</sub> is to compute the cosine similarity of their vector representations V\->\(d<sub>1</sub>\) and V\->\(d<sub>2</sub>\)
+
+sim\(d<sub>1</sub>, d<sub>2</sub>\) = V\->\(d<sub>1</sub>\) \· V\->\(d<sub>2</sub>\) / \|V\->\(d<sub>1</sub>\)\|\|V\->\(d<sub>1</sub>\)\| 
+
+- where the numerator represents the dot product
+- while the denominator is the product of their Euclidean lengths
+- The effect of the denominator is thus to length\-normalize the vectors
+
+_This measure is the cosine of the angle θ between the two vectors_
+
+
+### Chapter 16 
