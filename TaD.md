@@ -822,5 +822,97 @@ sim\(d<sub>1</sub>, d<sub>2</sub>\) = V\->\(d<sub>1</sub>\) \· V\->\(d<sub>2</s
 
 _This measure is the cosine of the angle θ between the two vectors_
 
+Viewing a collection of N documents as a collection of vectors leads to a natural view of a collection as a term\-document matrix.
+
+**term\-document matrix** : An M x N matrix whose rows represent the M terms of the N columns, each of which corresponds to a document
+
+_As always, the terms being indexed could be stemmed before indexing._
+
+#### Queries as vectors
+
+- we can also view a query as a vector
+- Consider the query q = jealous gossip
+- This  query  turns  into  the  unit  vector v\-\>\(q\)  =  \(0, 0.707, 0.707\)
+- The key idea is to assign to each document d a score equal to the dot product
+
+v\-\>\(q\) · v\-\>\(d\)
+
+- To summarize, by viewing a query as a “bag of words”, we are able to treat it as a very short document
+- As a consequence, we can use the cosine similarity between the query vector and a document vector as a measure ofthe score of the document for that query
+- A document may have a high cosine score for a query even if it does not contain all query terms
+
+#### Computing vector scores
+
+- In a typical setting we have a collection of documents each represented by a vector, a free text query represented by a vector, and a positive integer K
+- We seek the K documents of the collection with the highest vector space scores on the given query
+- We now initiate the study of determining the K documents with the highest vector space scores for a query
+
+**term\-at\-a\-time scoring** : adding in contributions one query term at a time
+
+_Contributions_ : The contribution to the vector score from a term t in a query
+
+_document\-at\-a\-time scoring_ : score is calculated one document at a time
+
+#### Variant tf\-idf functions
+
+For assigning a weight for each term in each document, a number of alternatives to tf and tf\-idf have been considered, the principal alternatives are discussed follwing this point.
+
+#### Sublinear tf scaling
+
+- It seems unlikely that twenty occurrences of a term in a document truly carry twenty times the significance of a single occurrence
+- A common way to count occurences uses the logarithm of the term frequency, which assigns a weight given by:
+
+wf<sub>t,d</sub> if tf<sub>t,d</sub> > 0 : \{1 + logtf<sub>t,d</sub>\} else: \{0\}
+
+In this form, we may replace tf by some other function wf to obtain:
+
+wf-idf<sub>t,d</sub> = wf<sub>t,d</sub> × idf<sub>t</sub>
+
+#### Maximum tf normalization
+
+- One well\-studied technique is to normalize the tf weights of all terms occurring in a document by the maximum tf in that document
+- For eachdocument d, let tf<sub>max</sub>(d) = max<sub>τ∈d</sub>tf<sub>τ,d</sub>
+- where τ ranges over all terms in d
+- Then, we compute a normalized term frequency for each term t in document d by:
+
+ntf<sub>t,d</sub> = a + \(1 \- a\)\(tf<sub>t,d</sub> / tf<sub>max</sub>\(d\)\)
+
+_where a is a value between 0 and 1 and is generally set to 0.4_
+
+The term a is a smoothing term whose role is to damp the contribution of the second term – which maybe viewed as a scaling down of tf by the largest tf value in d.
+
+The main idea of maximum tf normalization is to mitigate the following anomaly: we observe higher term frequencies in longer documents, merely because longer documents tend to repeat the same words over and over again
+
+_Maximum tf normalization does suffer from the following issues:_
+- The method is unstable in the following sense: a change in the stop wordlist can dramatically alter term weightings \(and therefore ranking\). Thus, it is hard to tune
+- A document may contain an outlier term with an unusually large number of occurrences of that term, not representative of the content of that document
+- More generally, a document in which the most frequent term appears roughly as often as many other terms should be treated differently fromone with a more skewed distribution
+
+#### Document and query weighting schemes
+
+Variations from one vector space scoring method to another hinge on the specific choices of weights in the vectors V\-\>\(d\)and V\-\>\(q\)
+
+**SMART notation**
+
+- The mnemonic for representing a combination of weights takes the form ddd.qqq where:
+- the first triplet gives the term weighting of the document vector
+- the second triplet gives the weighting in the query vector
+- The first letter in each triplet  specifies the term frequency component of the weighting, the second the document frequency component, and the third the form of normalization used
+
+#### Pivoted normalized document length
+
+**Longer documents:**
+- as a result of containing more terms – have higher tf values
+- contain more distinct terms
+
+_These factors can conspire to raise the scores of longer documents, which \(at least for some information needs\) is unnatural_
+
+Longer documents can broadly be lumped into two categories:
+- verbose documents that essentially repeat the same content – in these, the length of the document does not alter the relative weights of different terms
+- documents covering multiple different topics, in which th esearch terms probably match small segments of the document but not all of it – in this case, the relative weights of terms are quite different from a single short document that matches the query terms
+
+**pivoted document length normalization** : we compute the dot product score between a \(unit\) query vector and a normalized document, the score is skewed to account for the effect of document length on relevance
+
+**probability of relevance** :  a function of document length, averaged over all queries in an ensemble
 
 ### Chapter 16 
