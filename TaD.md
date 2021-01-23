@@ -915,4 +915,109 @@ Longer documents can broadly be lumped into two categories:
 
 **probability of relevance** :  a function of document length, averaged over all queries in an ensemble
 
-### Chapter 16 
+### Chapter 16.4 K\-means
+
+- K\-means is the most important flat clustering algorithm
+- Its objective is tominimize the average squared Euclidean distance of documents from their cluster centers where a cluster center is defined as the mean or centroid μ of the documents in a cluster ω:
+
+μ\(ω\) = \(1/\|ω\|\)∑x for x∈ω
+
+- The definition assumes that documents are represented as length\-normalized vectors in a real\-valued space in the familiar way
+- The ideal cluster  in K\-means is a sphere with the centroid as its center  of gravity
+- Ideally, the clusters should not overlap
+
+**residual sum of squares** : the squared distance of each vector from its centroid summed over all vectors
+
+RSS<sub>k</sub> = ∑\|x\−μ\(ω<sub>k</sub>\)\|<sup>2</sup> for x∈ω<sub>k</sub>
+
+- RSS is the objective function inK-means and our goal is to minimize it
+- Since N is fixed, minimizing RSS is equivalent to minimizing the average squared distance, a measure of how well centroids represent their documents
+
+#### Working with K\-means
+
+- The first step of K\-means is to select as initial cluster centers K randomly selected documents, the _seeds_
+- The algorithm then moves the cluster centers around in space in order to minimize RSS
+- This is done iteratively by repeating two steps until a stopping criterion is met: reassigning documents to the cluster with the closest centroid; and recomputing each centroid based on the current members of its cluster
+
+We can apply one of the following termination conditions:
+- A fixed number of iterationsIhas been completed.  This condition limits the runtime of the clustering algorithm, but in some cases the quality of the clustering will be poor because of an insufficient number of iterations
+- Assignment of documents to clusters \(the partitioning function γ\) doesnot change  between iterations. Except for cases with a bad local minimum, this produces a good clustering, but runtimes may be unacceptably long
+- Centroids μ<sub>k</sub> do not change between iterations. This is equivalent to γ not changing 
+- Terminate when RSS falls below a threshold. This criterionensures thatthe  clustering is of a desired quality after termination
+- Terminate when the decrease in RSS falls below a threshold θ. For small θ,this indicates that we are close to convergence. Again, we need to combine it with a bound on the number of iterations to prevent very long runtimes
+
+**refer to 16.8 \- 16.10 for a proof that K\-means converges by proving that RSS monotonically decreases in each iteration**
+
+- If a document set contains many outliers; documents that are far from any other documents and therefore do not fit well into any cluster then there is no guarantee that a global minimum in the objective function will be reached
+- Frequently, if an outlier is chosen as an initial seed, then no other vector is assigned to it during subsequent iterations. Thus, we end up with a singleton cluster\(a cluster with only one document\)
+
+Another type of suboptimal clustering that frequently occurs is one with empty clusters.
+
+Effective heuristics for seed selection include:
+- excluding outliers from the seed set
+- trying out multiple starting points and choosing the clustering with lowest cost
+- obtaining seeds from another method such as hierarchical clustering
+
+_A robust method that works well for a large variety of document distributions is to select i \(e.g., i=10\) random vectors for each cluster and use their centroid as the seed for this cluster._
+
+####  Time complexity of K\-means
+
+- Most of the time is spent on computing vector distances, one such operation costs Θ\(M\)
+- The reassignment step computes KN distances, so its overall complexity is Θ\(KNM\)
+- In the recomputation step, each vector gets added to a centroid once, so the complexity of this step is Θ\(NM\)
+- For a fixed number of iterations I, the overall complexity is therefore Θ\(IKNM\)
+
+_Thus, K\-means is linear in all relevant factors: iterations, number of clusters, number of vectors and dimensionality of the space_
+
+- In most cases, K\-means quickly reaches either complete convergence or a clustering that is close to convergence
+- In the latter case, a few documents would switch membership if further iterations were computed, but this has a small effect on the overall quality of the clustering
+
+**K\-medoids** : a variant of K\-means that computes medoids instead  of centroids as cluster centers
+
+_medoid_ : the document vector that is closest to the centroid
+
+#### Cluster cardinality in K\-means
+
+**A heuristic method to guess K through minimizing RSS**
+
+- We first perform i\(e.g., i=10\) clusterings with K clusters \(each with a different initialization\) and compute the RSS of each
+- Then we take the minimum of the i RSS values \(RSS<sub>min</sub>\(K\)\)
+- Now we can inspect the values RSS<sub>min</sub>\(K\) as K increases and find the “knee” in the curve – the point where successive decreases in RSS<sub>min</sub> become noticeably smaller
+
+- A second type of criterion for cluster cardinality imposes a penalty for each new cluster 
+- we start with a single cluster containing all documents and then search for the optimal number of clusters K by successively incrementing K by one
+
+ To determine the cluster cardinality in this way, we create a generalized objective function that combines two elements:
+ - distortion, a measure of how much documents deviate from the prototype of their clusters \(e.g., RSS for K\-means\)
+ - a measure of,model complexity, We interpret a clustering here as a model of the data
+ - Model complexity in clustering is usually the number of clusters or a function thereof
+
+ For K\-means, we then get this selection criterion for K:
+
+ K = arg min\[RSS<sub>min</sub>\(K\) + λK\]
+
+ where λ is a weighting factor. 
+
+ _A large value of λ favors solutions with few clusters.  For λ=0, there is no penalty for more clusters and K=N is the best solution._
+
+ - In some cases, we can choose values of λ that have worked well for similar data sets in the past
+ - For example, if we periodically cluster news stories from a newswire, there is likely to be a fixed value of λ that gives usthe right K in each successive clustering
+
+**Akaike Information Criterion** : an  information\-theoretic measure that trades off distortion against model complexity
+
+The general form of AIC is:
+
+K = arg minK\[\−2L\(K\) + 2q\(K\)\]
+
+- where −L\(K\), the negative maximum log\-likelihood of the data for K clusters, is a measure of distortion
+- q\(K\),  the number of parameters of a model with K clusters, is a measure of model complexity
+
+- The first property of a good model of the data is that each data point is modeled well by the model
+
+- The derivation of AIC is based on a number of assumptions e.g the data are independent and identically distributed
+- These assumptions are only approximately true for data sets in information retrieval
+- As a consequence, the AIC can rarely be applied without modification in text clustering
+
+
+
+
