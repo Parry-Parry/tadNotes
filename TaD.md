@@ -1572,7 +1572,219 @@ _It is important to avoid harms that may result from classifiers, harms that exi
 	* For example, researchers have shown that some widely used toxicity classifiers incorrectly flag as being toxic sentences that are non\-toxic but simply mention minority  identities like women, blind people or gay people
 	* Such false positive errors, if employed by toxicity detection systems without human oversight, could lead to the censoring of discourse by or about these groups
 
-These problems can be caused by:  
-	* labels
-	* resources such as lexicons or pretrained embeddings
-	* model architecture
+These problems can be caused by:   
+* labels
+* resources such as lexicons or pretrained embeddings
+* model architecture
+
+### Logistic Regression
+
+**logistic regression** : the base\-line supervised machine learning algorithm for classification
+
+**neural network** : can be viewed as a series of logistic regression classifiers stacked on top of each other
+
+_Logistic regression can be used to classify an observation into one of two classes, or into one of many classes._
+
+* A generative model like naive Bayes makes use of a likelihood term, which expresses how to generate the features of a document if we knew it was of class c
+* By contrast a discriminative model in this text categorization scenario attempts to directly compute P\(c\|d\)
+	* Perhaps it will learn to assign a high weight to document features that directly improve its ability to discriminate between possible classes
+	* even if it couldn’t generate an example of one of the classes
+
+* Like naive Bayes, logistic regression is a probabilistic classifier that makes use of supervised machine learning
+* Machine learning classifiers require a training corpus of m input/output pairs
+* Components of a probabilistic machine learning classifier:
+	* A feature representation of the input: For each input observation this will be a vector of features
+	* A classification function that computes  ˆy, the estimated class, via p\(y\|x\). 
+	* An objective function for learning, usually involving minimizing error on training examples
+	* An algorithm for optimizing the objective function
+
+* Logistic regression has two phases:
+	* **training** : we train the system \(specifically the weights w and b\) using stochastic gradient descent and the cross\-entropy loss
+	* **test** : Given a test examplex we compute p\(y\|x\) and return the higher probability label y=1 or y=0
+
+#### Classification: the sigmoid
+
+* The goal of binary logistic regression is to train a classifier that can make a binary decision about the class of a new input observation
+* Here we introduce the **sigmoid classifier** that will help us make this decision
+* Consider a single input observationx, which we will represent by a vector of features
+	* The classifier output y can be 1 \(meaning the observation is a member of the class\) or 0 \(the observation is not a member of the class\)
+	* We want to know the probability P\(y=1\|x\) that this observation is a member of the class
+	* P\(y=1\|x\) is the probability that the document has positive sentiment
+	* P\(y=0\|x\) is the probability that the document has negative sentiment
+
+* Logistic regression solves this task by learning, from a training set, a vector of weights and a bias term
+* Each weight w<sub>i</sub> is a real number, and is associated with one of the input features x<sub>i</sub>
+* The weight w<sub>i</sub> represents how important that input featureis to the classification decision, and can be:
+	* positive \(providing evidence that the instance being classified belongs in the positive class\)
+	* negative \(providing evidencethat the instance being classified belongs in the negative class\)
+* The bias term, also called the intercept, is another real number that’s added to the weighted inputs
+
+* To make a decision on a test instance
+	* after we’ve learned the weights in training
+	* the classifier first multiplies each x<sub>i</sub> by its weight w<sub>i</sub>
+	* sums up the weighted features, and adds the bias term b
+	* The resulting single number z expresses the weighted sum of the evidence for the class
+
+z = \(∑w<sub>i</sub>x<sub>i</sub> for i in range\(1, n\)\) \+ b
+
+z = w·x\+b
+
+* To create a probability, we’ll pass z through the sigmoid function σ\(z\)
+* The sigmoid function is also called thelogistic function, and gives logistic regression its name
+* The sigmoid has the following equation: 
+
+y = σ\(z\) = 1 / 1\+e<sup>\-z</sup> = 1 / 1 \+ exp\(\-z\)
+
+* The sigmoid has a number of advantages:
+	* it takes a real\-valued number and maps it into the range \[0,1\]
+	* Because it is nearly linear around 0 but flattens toward the ends, it tends to squash outlier values toward 0 or 1
+	* it’s differentiable
+
+P\(y=1\) = 1 / 1 \+ exp\(\-\(w·x\+b\)\)
+
+P\(y=0\) = exp\(\-\(w·x\+b\)\) / 1 \+ exp\(\-\(w·x\+b\)\)
+
+The sigmoin function has the property:  
+
+1−σ\(x\) = σ\(−x\)
+
+* For a test instance x, we say yes if the probability P\(y=1\|x\) is more than \.5, and no otherwise
+	* We call \.5 the decision boundary
+
+**Designing  features:**   
+* Features are generally designed by examining the training set with an eye to linguistic intuitions and the linguistic literature on the domain
+* A careful error analysis on the training set or devset of an early version of a system often provides insights into features
+* For some tasks it is especially helpful to build complex features that are combinations of more primitive features
+	* For logistic regression and naive Bayes these combination features or feature interactions have to be designed by hand
+* For many tasks we'll need a large number of features
+	* Often these are created automatically via feature templates, abstract specifications of features
+* For example a bigram template for period disambiguation might create a feature for every pair of words that occurs before a period in the training set
+	* Thus the feature space is sparse, since we only have to create a feature if that n\-gram exists in that position in the training set
+
+**Choosing a classifier**  
+
+* When there are many correlated features, logistic regression will assign a more accurate probability than naive Bayes
+* So logistic regression generally works better on larger documents or datasets and is a common default
+
+* naive Bayes can work extremely well \(sometimes even better than logistic regression\) on very small datasets or short documents
+* Furthermore, naive Bayes is easy to implement and very fast to train \(there’s no optimization step\). So it’s still a reasonable approach to use in some situations
+
+#### Learning in Logistic Regression
+
+* What the system produces is ˆy, the system’s estimate of the true y
+* We want to learn parameters \(meaning w and b\) that make ˆy for each training observation as close as possible to the true y
+* This requires two components:
+	* The first is a metric for how close the current label \( ˆy\) is to the true gold label y
+	* Rather than measure similarity, we usually talk about the opposite of this: the distance between the system output and the gold output, and we call this distance the loss function or the cost function
+	* The second thing we need is an optimization algorithm for iteratively updating the weights so as to minimize this loss function
+
+#### The cross\-entropy loss function
+
+* We need a loss function that expresses, for an observationx, how close the classifier output \(ˆy=σ\(w·x\+b\)\) is to the correct output \(y, which is 0 or 1\)
+	* We call this:  
+	L\(ˆy,y\) = How much  ˆy differs from the true y  
+* We do this via a loss function that prefers the correct class labels of the training examples to be more likely
+* This is called conditional maximum likelihood estimation:
+	* we choose the parameters w,b that maximize the log probability of the true y labels in the training data given the observations x
+	* Since there are only two discrete outcomes \(1 or 0\), this is a Bernoulli distribution, and we can express  the  probability p\(y\|x\) that our classifier produces for  one observation as the following:  
+	p\(y\|x\) = ˆyy\(1−ˆy\)<sup>1−y</sup>  
+	* Now we take the log of both sides:  
+	logp\(y\|x\) = ylog ˆy \+ \(1−y\)log\(1−ˆy\)  
+* Why does minimizing this negative log probability do what we want?
+	* A perfect classifier would assign probability 1 to the correct outcome \(y=1 or y=0\) andprobability 0 to the incorrect outcome
+	* That means the higher ˆy\(the closer it is to 1\), the better the classifier; the lower ˆyis \(the closer it is to 0\), the worse the classifier
+	* The negative log of this probability is a convenient loss metric since it goes from 0 \(negative log of 1, no loss\) to infinity \(negative log of 0, infinite loss\)
+* This loss function also ensures that as the probability of the correct answer is maximized, the probability of the incorrect answer is minimized
+	* since the two sum to one, any increase in the probability of the correct answer is coming at the expense of the incorrect answer
+
+#### Gradient Descent
+
+* Our goal with gradient descent is to find the optimal weights: minimize the loss function we’ve defined for the model
+* the loss function L is parameterized by the weights, which we’ll refer to in machine learning in general as θ \(in the case of logistic regression θ=w,b\)
+* So the goal is to find the set of weights which minimizes the loss function, averaged over all examples:  
+^θ = argmin 1 / m ∑L<sub>CE</sub>\(f\(x<sup>\(i\)</sup>;θ\), y<sup>\(i\)</sup>\)
+
+* Gradient descentis a method that finds a minimum of a function by figuring out in which direction\(in the space of the parameters θ\) the function’s slope is rising the most steeply, and moving in the opposite direction
+* For logistic regression, this loss function is conveniently convex
+	* A convex function has just one minimum; there are no local minima to get stuck in, so gradient descent starting from any point is guaranteed to find the minimum
+* The gradient of a function of many variables is a vector pointing in the direction of the greatest increase in a function
+* The gradient is a multi\-variable generalization of the slope, so for a function of one variable we can informally think of the gradient as the slope
+
+* The magnitude of the amount to move in gradient descent is the value of the sloped d/dw of f\(x;w\) weighted by a learning rate η
+* A higher \(faster\) learning rate means that we should move w more on each step
+* The change we make in our parameter is the learning rate times the gradient  
+
+w<sup>t+1</sup> = w<sup>t</sup> − η d/dw of f\(x;w\)
+
+#### The Stochastic Gradient Descent Algorithm
+
+* The learning rate η is a hyperparameter that must be adjusted
+	* If it’s too high, hyperparameter the learner will take steps that are too large, overshooting the minimum of the loss function
+	*  If it’s too low, the learner will take steps that are too small, and take too long to get to the minimum
+* It is common to start with a higher learning rate and then slowly decrease it, so that it is a function of the iteration k of training; the notation η<sub>k</sub> can be used to mean the value of the learning rate at iteration k
+
+####  Mini\-batch training
+
+* Stochastic gradient descent is called stochastic because it chooses a single random example at a time, moving the weights so as to improve performance on that single example
+* That can result in very choppy movements, so it’s common to compute the gradient over batches of training instances rather than a single instance
+* For example in batch training we compute the gradient over the entire dataset
+	* By seeing so many examples, batch training offers a superb estimate of which direction to move the weights, at the cost of spending a lot of time processing every single example in the training set to compute this perfect direction
+* A compromise is mini\-batch training: we train on a group of m examples \(per\-mini\-batchhaps 512, or 1024\) that is less than the whole dataset
+* Mini\-batch training also has the advantage of computational efficiency
+	* The mini\-batches can easily be vectorized, choosing the size of the mini\-batch based on the computational resources
+	* This allows us to process all the examples in one mini\-batch in parallel and then accumulate the loss, something that’s not possible with individual or batch training
+
+#### Regularization
+
+* There is a problem with learning weights that make the model perfectly match the training data
+* If a feature is perfectly predictive of the outcome because it happensto only occur in one class, it will be assigned a very high weight
+* The weights for features will attempt to perfectly fit details of the training set, in fact too perfectly, modeling noisy factors that just accidentally correlate with the class
+	* This problem is called overfitting
+	* A good model should be able to generalize well from the training at a to the unseen test set, but a model that overfits will have poor generalization
+* To avoid overfitting, a new regularization term R\(θ\) is added to the objective regularization function resulting in the following objective for a batch of m examples:  
+^θ = argmax ∑ logP\(y<sup>\(i\)</sup>\|x<sup>\(i\)</sup>\) − αR\(θ\) for i in range\(1, m\)
+* The new regularization term R\(θ\) is used to penalize large weights
+* Thus a setting of the weights that matches the training data perfectly — but uses many weights with high values to do so — will be penalized more than a setting that matches the data a little less well, but does so using smaller weights
+* There are two common ways to compute this regularization term R\(θ\)
+	* L2 regularization is a quadratic function of the weight values, named because it uses the \(square of the\) L2 norm of the weight values
+	* The L2 norm, \|\|θ\|\|<sub>2</sub>, is the same as the Euclidean distance of the vector θ from the origin  
+	R\(θ\) = \|\|θ\|\|<sub>2</sub><sup>2</sup> = ∑θ<sub>j</sub><sup>2</sup> for j in range\(1, n\)  
+	* L1 regularizationis a linear function of the weight values, named after the L1 norm \|\|W\|\|<sub>1</sub>, the sum of the absolute values of the weights, or Manhattan distance\(the Manhattan distance is the distance you’d have to walk between two points in a city with a street grid like New York\):  
+	R\(θ\) = \|\|θ\|\|<sub>1</sub> = ∑\|θ<sub>i</sub>\| for i in range\(0,n\)
+
+* These kinds of regularization come from statistics, where L1 regularization is called lasso regression
+* L2 regularization is called ridge regression
+* L2 prefers weight vectors with many small weights,
+* L1 prefers sparse solutions with some larger weights but many more weights set to zero
+	*  Thus L1 regularization leads to much sparser weight vectors, that is, far fewer features
+
+* Both L1 and L2 regularization have Bayesian interpretations as constraints on the prior of how weights should look
+* L1 regularization can be viewed as a Laplace prior on the weights
+* L2 regularization corresponds to assuming that weights are distributed according to a Gaussian distribution with mean μ=0
+* In a Gaussian or normal distribution, the further away a value is from the mean, the lower its probability \(scaled by the variance σ\)
+* By using a Gaussian prior on the weights, we are saying that weights prefer to have the value 0
+
+#### Multinomial logistic regression
+
+* Sometimes we need more than two classes
+* In such cases we use multinomial logistic regression, also called softmax regression \(or, historically, the maxent classifier\)
+* In multinomial logistic regressionthe target y is a variable that ranges over more than two classes; we want to know the probability of y being in each potential class c∈C, p\(y=c\|x\)
+
+* The multinomial logistic classifier uses a generalization of the sigmoid, called the softmax function, to compute the probabilityp \(y=c\|x\)
+* The softmax function softmax takes a vector of k arbitrary values and maps them to a probability distribution, with each value in the range \(0,1\), and all the values summing to 1
+
+#### Features in Multinomial Logistic Regression
+
+* Features in multinomial logistic regression function similarly to binary logistic regression, with one difference that we’ll need separate weight vectors \(and biases\) for each of the K classes
+* In binary classification a positive weight w<sub>5</sub> on a feature influences the classifier toward y=1 \(positive sentiment\) and a negative weight influences it toward y=0\(negative sentiment\) with the absolute value indicating how important the feature is
+* For multinominal logistic regression, by contrast, with separate weights for each class, a feature can be evidence for or against each individual class
+
+_In 3\-way multiclass sentiment classification, for example, we must assign each document one of the 3 classes \+,−, or 0 \(neutral\). Now a feature related to exclamation marks might have a negative weight for 0 documents, and a positive weight for \+ or \- documents._
+
+#### Interpreting models
+
+* Often we want to know more than just the correct classification of an observation
+* We want to know why the classifier made the decision it did
+* That is, we want our decision to be interpretable: the core idea is that as humans we should know why our algorithms reach the conclusions they do
+* Logistic regression can be combined with statistical tests investigating whether a particular feature is significant by one of these tests, or inspecting its magnitude 
+	* This can help us interpret why the classifier made the decision it makes
