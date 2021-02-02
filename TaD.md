@@ -1168,7 +1168,7 @@ There are two common ways to train the probabilities of the unknown word model <
 
 - The first one is to turn the problem back into a closed vocabulary oneby choosing a fixed vocabulary in advance
  - Choose a vocabulary\(word list\) that is fixed in advance
- - Convert in the training set any word that is not in this set \(any OOV word\) tothe unknown word token <UNK\> in a text normalization step
+ - Convert in the training set any word that is not in this set \(any OOV word\) to the unknown word token <UNK\> in a text normalization step
  - Estimate the probabilities for <UNK\> from its counts just like any other regular word in the training set
 
 - The second alternative, in situations where we don’t have a prior vocabulary in advance, is to create such a vocabulary implicitly, replacing words in the training data by <UNK\>based on their frequency
@@ -1185,7 +1185,7 @@ There are two common ways to train the probabilities of the unknown word model <
 - The simplest way to do smoothing is to add one to all the bigram counts,  before we normalize them into probabilities
 - All the counts that used to be zero will nowhave a count of 1, the counts of 1 will be 2, and so on
 
-_Laplace smoothing does not perform well enough to be used in modern n\-gram models, but it usefully introduces many of the concepts that wesee in other smoothing algorithms, gives a useful baseline, and is also a practical smoothing algorithm for other tasks liketext classification._
+_Laplace smoothing does not perform well enough to be used in modern n\-gram models, but it usefully introduces many of the concepts that we see in other smoothing algorithms, gives a useful baseline, and is also a practical smoothing algorithm for other tasks liketext classification._
 
 Recall that the unsmoothed maximum likelihood estimate of the unigram probability of the word w<sub>i</sub> is its count c<sub>i</sub> normalized by the total number of word tokens N:
 
@@ -1299,4 +1299,280 @@ _To summarize, by making some incorrect but convenient simplifying assumptions, 
 
 This means that, as for entropy, we can estimate the cross-entropy of a model m on some distribution p by taking a single sequence that is long enough instead of summing over all possible sequences.
 
+## Week 4
+### Reading
 
+### Chapter 4: Naive Bayes and Sentiment Classification
+
+**text categorization** : the task of assigning a label or category to an entire text or document
+
+**sentiment analysis** : the extraction of sentiment
+
+_sentiment_ :  the positive or negative orientation that a writer expresses toward some object
+
+* The simplest version of sentiment analysis is a binary classification task
+* the words of a text provide excellent cues
+* Words like great, richly, awesome, and pathetic, and awful and ridiculously are very informative cues
+
+**Spam detection** :  the binary classification task of assigning an email to one of the two classes spam or not\-spam
+
+**language id** : Identifying the language\(s\) a text is written in
+
+_Subject category classification is the task for which the naive Bayes algorithm was invented in 1961_
+
+* Classification is essential for tasks below the level of the document as well
+* We’ve already seen:
+	* period disambiguation \(deciding if a period is the end of a sentence or part of a word\)
+	* word tokenization \(deciding if a character should bea word boundary\)
+* Even language modeling can be viewed as classification: 
+	* each word can be thought of as a class, and so predicting the next word is classifying the context so far into a class for each next word
+* A part\-of\-speech tagger classifies each occurrence of a word in a sentence as, e.g., a noun or a verb
+
+* The goal of classification is:
+	* to take a single observation
+	* extract some useful features
+	* and thereby classify the observation into one of a set of discrete classes
+* One method for classifying text is to use handwritten rules
+	* There are many areas of language processing where handwritten rule\-based classifiers constitute a state\-of\-the\-art system, or at least part of it
+
+_Most cases of classification in language processing are done via supervised machine learning._
+
+* In supervised machine learning, we have a data set of input observations, each associated with some correct output \(a ‘supervision signal’\)
+* The goal of the algorithm is to learn how to map from a new observation to a correct output
+* A probabilistic classifier additionally will tell us the probability of the observation being in the class
+	* This full distribution over the classes can be useful information for downstream decisions
+	* avoiding making discrete decisions early on can be useful when combining systems
+
+_Many kinds of machine learning algorithms are used to build classifiers._
+
+* Generative classifiers like naive Bayes build a model of how a class could generate some input data
+	* Given an observation, they return the class most likely to have generated the observation
+* Discriminative classifiers like logistic regression instead learn what features from the input are most useful to discriminate between the different possible classes
+* While discriminative systems are often more accurate and hence more commonly used, generative classifiers still have a role
+
+#### Naive Bayes Classifiers
+
+**multinomial naive Bayes classifier** :  it is a Bayesian classifier that makes a simplifying \(naive\) assumption about how the features interact
+
+* We represent a text document as if it were a bag\-of\-words, that is, an unordered set of words with their positions ignored, keeping only their frequency in the document
+* Naive Bayes is a probabilistic classifier, meaning that for a documentd, out of all classes c∈C the classifier returns the class  ˆc which has the maximum posterior probability given the document
+* ˆ represents the estimate of the correct class
+
+**Bayes' Rule**
+
+P\(x\|y\) = P\(y\|x\)P\(c\) / P\(y\)
+
+ˆc = argmax P\(d\|c\)P\(c\) / P\(d\) for a class c and a document d
+
+_As d is the same for all classes in a document we can remove these terms from the equation._
+
+ˆc = argmax P\(d\|c\)P\(c\)
+
+* We call Naive Bayes a generative model because we can read the above equation as stating a kind of implicit assumption about how a document is generated
+	* first a class is sampled from P\(c\)
+	* then the words are generated by sampling from P\(d\|c\)
+
+* We compute the most probable class ˆcgiven some document d by choosing the class which has the highest product of two probabilities:
+	* the prior probability of the class P\(c\)
+	* the likelihood of the document P\(d\|c\)
+* Without loss of generalization, we can represent a document d as a set of features
+
+* Naive Bayes classifiers make two simplifying assumptions:
+	* we assume position doesn’t matter, and that the word “love” has the same effect on classification whether it occurs as the 1<sup>st</sup>, 20<sup>th</sup>, or last word in the document
+	* The second is commonly called the **naive Bayes assumption**
+
+This is the conditional independence assumption that the probabilities P\(f<sup>i</sup>\|c\)are independent giventhe classcand hence can be ‘naively’ multiplied as follows:
+
+P\(f<sup>1</sup>, f<sup>2</sup>, ..., f<sup>n</sup> \| c\) = P\(f<sup>1</sup>\|c\)·P\(f<sup>2</sup>\|c\)·...·P\(f<sup>n</sup>\|c\)
+
+* To apply the naive Bayes classifier to text, we need to consider word positions, by simply walking an index through every word position in the document:
+* positions ← all word positions in test document
+* Naive Bayes calculations, like calculations for language modeling, are done in logspace, to avoid underflow and increase speed
+
+C<sub>NB</sub> = argmax logP\(c\) \+ ∑ logP\(w<sub>i</sub>\|c\) for i∈positions
+
+_Classifiers that use a linear combination of the inputsto make a classification decision — like naive Bayes and also logistic regression — are calledlinear classifiers._
+
+#### Training the Naive Bayes Classifie
+
+* How can we learn the probabilities P\(c\) and P\(f<sub>i</sub>\|c\)?
+* Let’s first consider the maximum likelihood estimate
+* We’ll simply use the frequencies in the data
+* For the class prior P\(c\) we ask what percentage of the documents in our training set are in each class c
+	* Let N<sub>c</sub> be the number of documents in our training data with class c and N<sub>doc</sub> be the total number of documents
+	* Then:
+
+ˆP\(c\) = N<sub>c</sub> / N<sub>doc</sub>
+
+* To learn the probability P\(f<sub>i</sub>\|c\)
+	* we’ll assume a feature is just the existence of a word in the document’s bag of words
+	* so we’ll want P\(w<sub>i</sub>\|c\), which we compute as the fraction of times the word w<sub>i</sub> appears among all words in all documents of topic c
+* We first concatenate all documents with category c into one big “category c” text
+* Then we use the frequency of w<sub>i</sub> in this concatenated document to give a maximum likelihood estimate of the probability: 
+
+ˆP\(w<sub>i</sub>\|c\) = count\(w<sub>i</sub>\|c\) / ∑ count\(w,c\) for w∈V
+
+* Here the vocabulary V consists of the union of all the word types in all classes, not just the words in one class c
+* There is a problem, however, with maximum likelihood training
+	* Imagine we are trying to estimate the likelihood of the word “fantastic” given class positive
+	* but suppose there are no training documents that both contain the word “fantastic” and are classified as positive
+	* Perhaps the word “fantastic” happens to occur \(sarcastically?\)  in the class negative
+	* In this case the probability for this featire will be zero
+
+_But since naive Bayes naively multiplies all the feature likelihoods together, zero probabilities in the likelihood term for any class will cause the probability of the class to be zero, no matter the other evidence!_
+
+* The simplest solution is the add\-one \(Laplace\) smoothing
+	* While Laplace smoothing is usually replaced by more sophisticated smoothing algorithms in language modeling, it is commonly used in naive Bayes text categorization:
+
+ˆP\(w<sub>i</sub>\|c\) = count\(w<sub>i</sub>\|c\) \+ 1 / ∑ count\(w,c\) \+ \|V\| for w∈V
+
+* What do we do about words that occur in our test data but are not in our vocabulary at all because they did not occur in any training document in any class? 
+	* The solution for such unknown words is to ignore them — remove them from the test document and not include any probability for them at all
+* Finally, some systems choose to completely ignore another class of words:
+	* **stop words** : very frequent words like the and a
+	* This can be done by sorting the vocabulary by frequency in the training set, and defining the top 10–100 vocabulary entries as stop words
+
+#### Optimizing for Sentiment Analysis
+
+* For sentiment classification and a number of other text classification tasks
+	* whether a word occurs or not seems to matter more than its frequency
+	* Thus it often improves performance to clip the word counts in each document at 1 
+	* This variant is called binary multinomial naive Bayes or binary NB
+* The variant uses the same equation except that for each document we remove all duplicate words before concatenating them into the single big document
+
+* A very simple baseline that is commonly used in sentiment analysis to deal with negation is the following: 
+	* during text normalization,  prepend the prefix NOT to every word after a token of logical negation until the next punctuation mark
+	* Newly formed ‘words’ like NOTlike, NOTrecommend will thus occur more often in negative document and act as cues for negative sentiment
+	* while words like NOTbored, NOTdismiss will acquire positive associations
+
+* Finally, in some situations we might have insufficient labeled training data to train accurate naive Bayes classifiers using all words in the training set to estimate positive and negative sentiment
+	* In such cases we can instead derive the positive and negative word features from sentiment lexicons  
+	_sentiment lexicons_ :  lists of words that are pre\-annotated with positive or negative sentiment  
+	* A common way to use lexicons in a naive Bayes classifier is to add a feature that is counted whenever a word from that lexicon occurs
+	* Thus we might add a feature called ‘this word occurs in the positive lexicon’, and treat all instances of words in the lexicon as counts for that one feature
+	* Similarly,  we might add as a second feature ‘this word occurs in the negative lexicon’ of words in the negative lexicon
+* If we have lots of training data, and if the test data matches the training data, using just two features won’t work aswell as using all the words
+* But when training data is sparse or not representative ofthe test set, using dense lexicon features instead of sparse individual\-word features may generalize better
+
+#### Naive Bayes as a Language Model
+
+* A naive Bayes model can be viewed as a set of class\-specific unigram language models, in which the model for each class instantiates a unigram language model
+* Since the likelihood features from the naive Bayes model assign a probability to each word P\(word\|c\), the model also assigns a probability to each sentence:
+
+P\(s\|c\) = ∏ P\(w<sub>i</sub>\|c\)
+
+#### Evaluation: Precision, Recall, F\-measure
+
+**gold labels** : the human\-defined labels for each document that we are trying to match
+ 
+* To evaluate any system for detecting things, we start by building a confusion matrix  
+_confusion matrix_ : a table for visualizing how an algorithm performs with respect to the human gold labels, using two dimensions \(system output and gold labels\), and each cell labeling a set of possible outcomes  
+* Instead of accuracy we generally turn to two other metrics precision and recall
+	* Precision measures the percentage of the items that the system detected \(i.e., the system labeled as positive\) that are in fact positive \(i.e.,are positive according to the human gold labels\)
+	* Precision is defined as:  
+	Precision = true positives / true positives \+ false positives  
+	* Recall measures the percentage of items actually present in the input that were correctly identified by the system
+	* Recall is defined as:  
+	Recall = true positives / true postives \+ false negatives
+
+* There are many ways to define a single metric that incorporates aspects of both precision and recall
+* The simplest of these combinations is the F\-measure defined as:  
+F<sub>β</sub> = \(β<sup>2</sup>\+1\)PR / β<sup>2</sup>P \+ R  
+* The β parameter differentially weights the importance of recall and precision, based perhaps on the needs of an application
+* Values of β > 1 favor recall, while values of β < 1 favor precision
+* When β=1, precision and recall are equally balanced; this is the most frequently used metric, and is called F<sub>β=1</sub> or just F<sub>1</sub>:  
+F<sub>1</sub> = 2PR / P \+ R  
+* F\-measure comes from a weighted harmonic mean of precision and recall
+	* The harmonic mean of a set of numbers is the reciprocal of the arithmetic mean of reciprocals
+* Harmonic mean is used because it is a conservative metric
+* The harmonic mean oftwo values is closer to the minimum of the two values than the arithmetic mean is
+* Thus it weighs the lower of the two numbers more heavily
+
+#### Evaluating with more than two classes
+
+* For sentiment analysis we generally have 3 classes \(positive, negative, neutral\)
+
+**macroaveraging** : the performance for each class, and then average over classes
+
+**microaveraging** : the decisions for all classes into a single confusion matrix, and then compute precision and recall from that table
+
+_A microaverage is dominated by the more frequent class since the counts are pooled._
+
+#### Test sets and Cross\-validation
+
+* The training and testing procedure for text classification follows what we saw with language modeling 
+	* we use the training set to train the model
+	* then use the development test set\(also called a devset\) to perhaps tune some parameters
+	* decide what the best model is
+* Once we come up with what we think is the best model, we run it on the \(hitherto unseen\) test set to report its performance
+
+* While the use of a devset avoids overfitting the test set having a fixed training set, devset, and test set creates another problem:
+	* in order to save lots of data for training, the test set \(or devset\) might not be large enough to be representative
+* Wouldn’t it be better if we could somehow use all our data for training and still use all our data for test?
+* We can do this by cross\-validation: 
+	* we randomly choose a cross\-validation training and test set division of our data
+	* train our classifier
+	* then compute the error rate on the test set
+	* Then we repeat with a different randomly selected training set and test set
+	* We do this sampling process 10 times and average these 10 runs toget an average error rate
+	* This is called 10\-fold cross\-validation
+* The only problem with cross\-validation is that because all the data is used for testing
+	*  we need the whole corpus to be blind
+	* we can’t examine any of the data to suggest possible features and in general see what’s going on
+	* because we’d be peeking at the test set
+	* and such cheating would cause us to overestimate the performance of our system
+
+#### Statistical Significance Testing
+
+* Suppose we’re comparing the performance of classifiers A and B on a metric M such as F<sub>1</sub>, or accuracy
+* Perhaps we want to know if our logistic regression sentiment classifier A gets a higher F<sub>1</sub> score than our naive Bayes sentiment classifier B on a particular test set x
+* Let’s call M\(A,x\) the score that system A gets on test set x, and δ\(x\) the performance difference between A and B on x:  
+δ\(x\) = M\(A,x\)−M\(B,x\)  
+* We would like to know if δ\(x\)>0, meaning that our logistic regression classifierhas a higher F<sub>1</sub> than our naive Bayes classifier on X
+* δ\(x\) is called the effect size
+	* a bigger δ means that A seems to be way better than B
+	* a small δ means A seems to be only a little better
+
+* A might just be accidentally better than B on A particular x
+* we want to know if A’s superiority over B is likely to hold again if we checked another test set x′
+* In the paradigm of statistical hypothesis testing, we test this by formalizing two hypotheses:
+	H<sub>0</sub> : δ\(x\)≤0
+	H<sub>1</sub> : δ\(x\)>0  
+* The hypothesis H<sub>0</sub>, called the null hypothesis, supposes that δ\(x\) is actually negative or zero, meaning that A is not better than B
+* We would like to know if we can confidently rule out this hypothesis, and instead support H<sub>1</sub>, that A is better
+	* We do this by creating a random variable X ranging over all test sets
+	* Now weask how likely is it, if the null hypothesis H<sub>0</sub> was correct, that among these test sets we would encounter the value of δ\(x\) that we found
+* We formalize this likelihood as the p\-value:
+	* the probability, assuming the null hypothesis H<sub>0</sub> is true, of seeing the δ\(x\) that we saw or one even greater
+* A very small p\-value means that the difference we observed is very unlikely under the null hypothesis, and we can reject the null hypothesis
+
+* There are two common non\-parametric tests used in NLP:
+	* approximate randomization
+	* bootstrap test
+* Paired tests are those in which we compare two sets of observations that are aligned:
+	* each observation in one set can be paired with an observation in another
+
+#### The Paired Bootstrap Test
+
+* The word bootstrapping refers to repeatedly drawing large numbers of smaller samples with replacement \(called bootstrap samples\) from an original larger sample
+	* The intuition of the bootstrap test is that we can create many virtual test sets from an observed test set by repeatedly sampling from it
+	* The method only makes the assumption that the sample is representative of the population
+
+p\-value\(x\) = ∑ 1\(δ\(x<sup>\(i\)</sup>\)−δ\(x\)≥δ\(x\) for range \(i, b\) where b is the total number of samples
+
+#### Avoiding Harms in Classification
+
+_It is important to avoid harms that may result from classifiers, harms that exist both for naive Bayes classifiers and for the other classification algorithms._
+
+**representational harms** : harms caused by a system that demeans a social group, for example by perpetuatingnegative stereotypes about them
+
+* In other tasks classifiers may lead to both representational harms and other harms, such as censorship
+	* For example the important text classification task of toxicity detectionis the task of detecting hate speech, abuse, harassment, or other toxicity detection kinds of toxic language
+* While the goal of such classifiers is to help reduce societal harm, toxicity classifiers can themselves cause harms
+	* For example, researchers have shown that some widely used toxicity classifiers incorrectly flag as being toxic sentences that are non\-toxic but simply mention minority  identities like women, blind people or gay people
+	* Such false positive errors, if employed by toxicity detection systems without human oversight, could lead to the censoring of discourse by or about these groups
+
+These problems can be caused by:  
+	* labels
+	* resources such as lexicons or pretrained embeddings
+	* model architecture
