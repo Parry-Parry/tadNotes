@@ -1577,7 +1577,7 @@ These problems can be caused by:
 * resources such as lexicons or pretrained embeddings
 * model architecture
 
-### Logistic Regression
+### Chapter 5: Logistic Regression
 
 **logistic regression** : the base\-line supervised machine learning algorithm for classification
 
@@ -1788,3 +1788,1001 @@ _In 3\-way multiclass sentiment classification, for example, we must assign each
 * That is, we want our decision to be interpretable: the core idea is that as humans we should know why our algorithms reach the conclusions they do
 * Logistic regression can be combined with statistical tests investigating whether a particular feature is significant by one of these tests, or inspecting its magnitude 
 	* This can help us interpret why the classifier made the decision it makes
+
+## Week 6
+### Chapter 6: Vector Semantics and Embeddings
+
+**distributional  hypothesis** : how words are distributed and similarity in what they mean
+
+**vector semantics** : defines semantics & interprets word meaning to explain features such as word similarity
+
+#### Lexical Semantics
+
+##### Lemmas and Senses 
+
+* Let’s start by looking at how one word \(we’ll choose mouse\) might be defined in a dictionary \(simplified from the online dictionary WordNet\):mouse \(N\)
+	* any of numerous small rodents...
+	* a hand\-operated device that controls a cursor...
+* Here the form mouse is the lemma,  also called the citation form
+* The form mouse would also be the lemma for the word mice; dictionaries don’t have separate definitions for inflected forms like mice
+* In many languages the infinitive form is used as the lemma for the verb, so Spanish dormir “to sleep” is the lemma for duermes “you sleep”
+* The specific forms sung or carpets or sing or duermes are called wordforms
+* As the example above shows, each lemma can have multiple meanings; the lemma mouse can refer to the rodent or the cursor control device
+* We call each of these aspects of the meaning of mouse a word sense
+
+##### Synonymy
+
+* One important component of word meaning is the relationship between word senses
+	* For example when one word has a sense whose meaning is identical to a sense of another word, or nearly identical, we say the two senses ofthose two words are synonyms
+* A more formal definition of synonymy \(between words rather than senses\) is that two words are synonymous if they are substitutable for one another in any sentence without changing thetruth conditions of the sentence, the situations in which the sentence would be true
+	* We often say in this case that the two words have the same propositional meaning  
+**principle of contrast** :  a difference in linguistic form is always associated with some difference in meaning  
+* In practice, the word synonym is therefore used to describe a relationship of approximate or rough synonymy
+
+**Word Similarity**  
+* While words don’t have many synonyms, most words do have lots of similar words
+	* Cat is not a synonym of dog, but cats and dogs are certainly similar words
+* In moving from synonymy to similarity, it will be useful to shift from talking about relations between word senses \(like synonymy\) to relations between words \(like similarity\)
+* The notion of word similarity is very useful in larger semantic tasks
+	* Knowing how similar two words are can help in computing how similar the meaning of two phrases or sentences are, a very important component of natural language understanding tasks like question answering, paraphrasing, and summarization
+
+##### Word Relatedness
+
+* The meaning of two words can be related in ways other than similarity
+	* One such class of connections is called word relatedness
+* Consider the meanings of the words coffee and cup
+	* Coffee is not similar to cup; they share practically no features \(coffee is a plant or a beverage, while a cup is amanufactured object with a particular shape\)
+	* But coffee and cup are clearly related; they are associated by co\-participating in an everyday event \(the event of drinking coffee out of a cup\)
+* One common kind of relatedness between words is if they belong to the same semantic field
+	* A semantic field is a set of words which cover a particular semantic domain and bear structured relations with each other
+* Semantic fields are also related to topic models, like Latent Dirichlet Allocation, LDA, which apply unsupervised learning on large sets of texts to induce sets of associated words from text
+
+##### Semantic Frames and Roles
+
+* Closely related to semantic fields is the idea of asemantic frame
+	* A semantic frame is a set of words that denote perspectives or participants in a particular type of event
+* Frames have semantic roles, and words in a sentence can take on these roles
+* Being able to recognize such paraphrases is important for question answering, and can help in shifting perspective for machine translation
+
+##### Connotation
+
+* Finally, words have affective meanings or connotations
+	* The word connotations has different meanings in different fields, but here we use it to mean the aspects of a word’s meaning that are related to a writer or reader’s emotions, sentiment, opinions, or evaluations
+* Even words whose meanings are similar in other ways can vary in connotation; consider the difference in connotations between fake, knockoff, forgery, on the one hand, and copy, replica, reproductionon the other, or innocent\(positive connotation\) and naive\(negative connotation\)
+* Positive or negative evaluation language is called sentiment and word sentiment plays a role in important sentiment tasks like sentiment analysis, stance detection, and applications of NLP to the language of politics and consumer reviews
+* Early work on affective meaning found that words varied along three important dimensions of affective meaning:
+	* valence: the pleasantness of the stimulus
+	* arousal: the intensity of emotion provoked by the stimulus
+	* dominance: the degree of control exerted by the stimulus
+
+##### Vector Semantics
+
+* Vectors semanticsis the standard way to represent word meaning in NLP, helping us model many of the aspects of word meaning we saw in the previous section
+* We can use a point in three\-dimensional space to represent the connotation of a word, and the proposal by linguists to define the meaning of a word by its distribution in language use, meaning its neighboring words or grammatical environments
+* The idea of vector semantics is to represent a word as a point in a multidimensional semantic space that is derived \(in ways we’ll see\) from the distributions of word neighbors
+* Vectors for representing words are called embeddings
+
+* In the tf\-idf model, an important baseline, the meaning of a word is defined by a simple function of the counts of nearby words
+* We will see that this method results in very long vectors that are sparse
+* We’ll introduce the word2vec model family for constructing short, dense vectors that have useful semantic properties
+* We’ll also introduce the cosine, the standard way to use embeddings to compute semantic similarity, between two words, two sentences, or two documents, an important tool in practical applications like question answering, summarization, or automatic essay grading
+
+#### Words and Vectors
+
+* Vector or distributional models of meaning are generally based on a co\-occurrence matrix, a way of representing how often words co\-occur.
+
+##### Vectors and documents
+
+* In a term\-document matrix, each row represents a word in the vocabulary and each column represents a document from some collection of documents
+* Each cell in this matrix represents the number of times a particular word \(defined by the row\) occurs in a particular document \(defined by the column\)
+* To review some basic linear algebra, a vector is, at heart, just a list or array of vector numbers
+* A vector space is a collection of vectors, characterized by their dimension
+* The ordering of the numbers in a vector space indicates different meaningful dimensions on which documents vary
+* We can think of the vector for a document as a point in \|V\|\-dimensional space; thus the documents are points in 4\-dimensional space
+* Term\-document matrices were originally defined as a means of finding similar documents for the task of document information retrieval
+* Two documents that are similar will tend to have similar words, and if two documents have similar words their column vectors will tend to be similar
+
+* A real term\-document matrix, of course, wouldn’t just have 4 rows and columns, let alone 2
+* More generally, the term\-document matrix has \|V\| rows \(one for eachword type in the vocabulary\) and D columns \(one for each document in the collection\); as we’ll see, vocabulary sizes are generally in the tens of thousands, and the number of documents can be enormous \(think about all the pages on the web\)
+* Information retrieval \(IR\) is the task of finding the document d from the D information retrieval documents in some collection that best matches a query q
+* For IR we’ll therefore also represent a query by a vector, also of length \|V\|, and we’ll need a way to compare two vectors to find how similar they are. \(Doing IR will also require efficient ways to store and manipulate these vectors by making use of the convenient fact that these vectors are sparse, i.e., mostly zeros\)
+
+##### Words as vectors: document dimensions
+
+An alternative to using the term\-document matrix to represent words as vectors of document counts, is to use the term\-term matrix, also called the word\-word matrix or the term\-context matrix, in which the columns are labeled by words rather word\-word matrix than documents
+
+* This matrix is thus of dimensionality \|V\|×\|V\| and each cell records the number of times the row \(target\) word and the column \(context\) word co\-occur in some context in some training corpus
+* The context could be the document, in which case the cell represents the number of times the two words appear in the same document
+* Note that \|V\|, the length of the vector, is generally the size of the vocabulary, often between 10,000 and 50,000 words \(using the most frequent words in the training corpus; keeping words after about the most frequent 50,000 or so is generally nothelpful\).
+* Since most of these numbers are zero these are sparse vector representations; there are efficient algorithms for storing and computing with sparse matrices
+
+#### Cosine for measuring similarity
+
+To  measure  similarity  between  two  target  words v and w, we need a metric that takes two vectors \(of the same dimensionality, either both with words as dimensions,hence of length \|V\|, or both with documents as dimensions as documents, of length \|D\|\) and gives a measure of their similarity.
+
+The cosine—like most measures for vector similarity used in NLP—is based on the dot product operator from linear algebra, also called the inner product. 
+
+* As we will see, most metrics for similarity between vectors are based on the dot product
+* The dot product acts as a similarity metric because it will tend to be high just when the two vectors have large values in the same dimensions
+* This raw dot product, however, has a problem as a similarity metric: it favors long vectors
+* The vector length is defined as:  
+\|v\| = sqrt\(∑v<sup>2</sup><sub>i</sub> for i in range\(1, N\)\)  
+* The dot product is higher if a vector is longer, with higher values in each dimension
+* More frequent words have longer vectors,  since they tend to co\-occur with more words and have higher co\-occurrence values with each of them
+	* The raw dot product thus will be higher for frequent words
+	* But this is a problem; we’d like a similarity metric that tells us how similar two words are regardless of their frequency
+* We modify the dot product to normalize for the vector length by dividing thedot product by the lengths of each of the two vectors
+	* This normalized dot product turns out to be the same as the cosine of the angle between the two vectors, following from the definition of the dot product between two vectors a and b
+
+#### TF\-IDF: Weighing terms in the vector
+
+* The co\-occurrence matrices above represent each cell by frequencies, either of words with documents , or words with other words
+	* But raw frequency is not the best measure of association between words
+	* Raw frequency is very skewed and not very discriminative
+
+**tf\-idf algorithm** : the product of two terms, each term capturing one of these two intuitions:  
+* **term frequency** : the frequency of the wordt in the document d
+* The second factor in tf\-idf is used to give a higher weight to words that occur only in a few documents
+	* Terms that are limited to a few documents are useful for discriminating those documents from the rest of the collection; terms that occur frequently across the entire collection aren’t as helpful
+
+**document frequency** : the number of documents a term occurs in
+
+**collection frequency** : the total number of times a word appears in the whole collection in any document
+
+#### Pointwise Mutual Information \(PMI\)
+
+**Pointwise mutual information** : a measure of how often two events x and y occur, compared with what we would expect if they were independent
+
+PMI\(w, c\) = log<sub>2</sub> P\(w, c\) / P\(w\) P\(c\)
+
+* The numerator tells us how often we observed the two words together 
+* The denominator tells us how often we would expect the two words to co\-occur assuming they each occurred independently; recall that the probability of two independent events both occurring is just the product of the probabilities of the two events
+* Thus, the ratio gives us an estimate of how much more the two words co\-occur than we expect by chance
+
+PMI values range from negative to positive infinity.  But negative PMI values \(which imply things are co\-occurring less often than we would expect by chance\) tend to be unreliable unless our corpora are enormous. To distinguish whether two words whose individual probability is each 10<sup>−6</sup> occur together less often thanchance, we would need to be certain that the probability of the two occurring together is significantly different than 10<sup>−12</sup>, and this kind of granularity would requirean enormous corpus.
+
+## FROM HERE IM SUMMARISING SLIDES AND ADDING TO THEM FROM READING
+
+##### Prediction\-based models: An alternative way to get dense vectors
+
+* Word2vec \(and variants\)
+* Learn embeddings as part of the process of wordprediction \(language modeling\)
+* Train a neural network to predict neighboring words
+	* Inspired by neural net language models
+	* In so doing, learn dense embeddings for the words in the training corpus
+* Advantages:
+	* Fast, easy to train 
+	* Available online in the word2vec \(gensim in python\) package
+	* Including sets of pretrained embeddings
+
+##### Word2vec outline 
+
+* A framework for learning word vectors using language modeling
+* Start with a large corpus of text
+* Every word in a fixed vocabulary \(V\) is represented by a vector \(initially random\)
+* Go through each position t in the text, which has a center word c and context \(“outside”\) words o 
+* Use the similarity of the word vectors for c and o to calculate the probabilityof o given c \(or vice versa\)
+* Keep adjusting the word vectors to maximize this probability 
+
+* In other words, for each position 𝑡 = 1, ... , 𝑇, predict context words within a window of fixed size m, given center word 𝑤<sub>t</sub>
+
+##### Word2vec details
+
+* Skip\-grams \(SG\)
+	* Predict context \(”outside”\) words \(position independent\) given center word
+* Continuous Bag of Words \(CBOW\)
+	* Predict center word from \(bag of\) context words
+
+* What about words not in the vocabulary?
+	* We may have removed stopwords
+	* Or truncated the vocabulary to \|V\| to remove rare words
+* UNK words all mapped to one entry in the vector
+
+##### New models: ELMo & BERT
+
+* Shift from context\-free models to contextual models based on language modeling \(predicting sequences of words\)
+* ELMo representations are:
+	* Contextual: The representation for each word depends on the previous words
+	* Deep: Combine all layers of a deep pre\-trained neural network
+	* Character based: Purely character based, allowing the network to use morphological clues to form robust representations for out-of-vocabulary tokens unseen in training
+* BERT representations:
+	* Bi\-directional context
+	* Deep\(er\) \+ Wider 
+	* Based on Words \+ character n\-grams
+	* Seq2Seq models: Transformer model \+ attention
+	* Extensible: Extendable to  a classifier / ranking model
+
+_BERT\-based classifiers are leading to major breakthroughs in NLP and IR_
+
+##### Evaluating embedding effectiveness
+
+* Extrinsic \(task-based, end\-to\-end\) Evaluation:
+	* Word analogies
+	* Question Answering
+	* Spell Checking
+	* Essay grading
+* Intrinsic Evaluation:
+	* Correlation between algorithm and human word similarity ratings
+		* Wordsim353: 353 noun pairs rated 0\-10.   sim\(plane,car\)=5.77
+	* Taking TOEFL multiple\-choice vocabulary tests
+		* Levied is closest in meaning to: imposed, believed, requested, correlated
+
+##### Before and after: Word representations
+
+* Sparse Bag\-of\-Words Model
+	* Word is a binary / count occurrence
+	* Each word in the vocabulary is represented by one position in a HUGE vector
+	* Context information is not utilized
+* Word Vectors
+	* Each word occurrence is represented by a vector of fixed number of dimensions \(generally 300\)
+	* Unsupervised, built just by reading huge corpus
+	* Context information is \(sometimes\) used
+
+## Week 7
+
+#### What does NLP involve?
+
+* Syntax
+	* Identifying the syntactic roles of words in sentences
+* Semantics
+	* Worrying about the meanings of the words, phrases or sentences
+* Pragmatics
+	* Worrying about how communicative context affects meaning
+
+#### NLP tasks
+
+* Machine Translation
+	* English to French
+* Single or Multi\-Doc Summarization
+	* Document to Outline
+* Entity disambiguation
+	* Apple \(computer\) vs. Apple \(fruit\)
+* Relation Extraction
+	* <\entity> <\relationship> <\entity\>
+* Semantic parsing
+	* Which college did Obama go to? 🡪 \(and \(Type University\) \(Education BarackObama\)\)
+* Textual entailment
+	* Does Sentence 1 imply sentence 2? 
+
+* Why is NLP hard? 
+	* Ambiguity
+	* Context Dependence
+	* Background Knowledge
+
+#### A typical NLP pipeline
+
+* Tokenization and lemmatization
+* Sentence boundary detection
+	* Most NLP operates on individual sentences
+* Part\-of\-speech\-tagging
+	* Identify nouns, verbs, adjectives, etc...
+* Parsing \(dependency\)
+	* Diagraming sentences
+* Named Entity Recognition
+	* Detect and classify entities
+* Coreference resolution
+	* Resolve pronouns to named entities 
+
+#### How is all this done?
+
+* Rule\-based approaches
+	* Linguistic \+ Domain knowledge
+	* Example: tokenization \- re.split\(‘r\\W\+’, raw\)
+	* Maintaining/updating rules manually is difficult
+* Statistical methods for identifying patterns
+	* Supervised machine learning
+* Learn from human interactions with computers
+	* Mainly as a way to acquire training data
+
+#### The Supervised ML model approach
+
+* Training
+	1. Collect a set of representative training documents
+	2. Label each piece of text with its label
+	3. Design feature extractors appropriate to the text and classes
+	4. Train a classifier to predict the labels from the data
+* Testing
+	1. Receive a set of test text 
+	2. Run model inference to label each piece of text
+	3. Appropriately output the label
+	4. Evaluate correctness of predicted labels
+
+#### Regularities in language
+
+* Word n\-grams model : regularities in word sequences
+* Language has richer structure
+	* Phrases : There are groupings of words in sentences that behave like a unit \(collocations, entities\)
+	* Dependencies : Words in a sentence have specific syntactic \(and semantic\) relationships
+* We use ML \(Hidden Markov Models, and others\) to predict these
+
+#### Part\-of\-Speech \(POS\) Tagging
+
+* Given a sentence, what role does each word play?
+* Primary school: NOUN, PRONOUN, ADJ, VERB, etc.
+* Part\-of\-speech tagging is the most basic syntactic analysis we can do
+	* Input: A sequence of tokens \(e.g., a sentence, tweet, search queries\)
+	* Output: An assignment of POS tags for each word in the input
+
+#### Hidden Markov Model
+
+* Generalization of Naïve Bayes to sequences
+* Assume an underlying set of hidden \(unobserved\) states \(labels\), y,  in which the model can be
+* Assume probabilistic transitions between states over time as sequence is generated
+* Assume a probabilistic generation of tokens from states \(e.g. words generated for each POS\)
+* Assume current state is dependent only on the previous state. \(known as the ‘markov assumption’\)
+	* The assumption may vary \(2<sup>nd</sup> order = previous 2 states\)
+
+##### Parts of the model
+
+* x<sub>i</sub> : observed nodes \(i.e. words\)
+* y<sub>i</sub> : hidden nodes \(i.e. POS tags\)
+	* goal will be to predict theses
+* Transitions: 
+	* p\(y<sub>i</sub> \| y<sub>i\-1</sub>\)\(horizontal arrows\)
+* Emissions: 
+	* p\(x<sub>i</sub> \| y<sub>i</sub>\) \(vertical arrows\)
+* Things to Do:
+	* Training: learn p\(y<sub>i</sub> \| y<sub>i\-1</sub>\) and p\(x<sub>i</sub> \| y<sub>i</sub>\)
+	* Inference \(test\) : given x<sub>i</sub> , infer y<sub>i</sub> or p\(y<sub>i</sub>\)
+
+#### Training time: what can we learn?
+
+Just count and normalize \(over training data\)
+
+##### HMMs: POS Training
+
+* Transitions: p\(y<sub>i</sub> \| y<sub>i\-1</sub>\)
+	* Pr\(V\|N\) = 1/2
+	* Pr\(DT\|V\) = 1/1
+	* Pr\(N\|DT\) = 1/1
+	* Pr\(END\|N\) = 1/2
+* Emissions: p\(x<sub>i</sub> \| y<sub>i</sub>\)
+	* Pr\(James \| N\) = 1/2
+	* Pr\(ate \| V\) = 1
+	* Pr\(the \| DT\) = 1
+	* Pr\(food \| N\) = 1/2
+
+N \-\> James  
+V \-\> ate  
+DT \-\> the  
+N \-\> food  
+
+### For POS inference diagrams refer to week 7 
+
+#### HMMs: POS Inference
+
+* Brute force:
+	1. Enumerate all possible state assignments
+	1. Score each assignment
+	1. Do one of:
+		a. Pick the “best” \(Viterbi\)  
+		b. Compute statistics \(Forward\-backward\)
+
+##### HMMs: Viterbi
+
+We take the path from <\end\> to <\start\> that has the highest value. \[Looks at horizontal values in sequences\]
+
+Steps:  
+* Find the best sequence to get V in position 2
+* Find the best suffix with V in position 2
+* Take the best overall sequence
+
+#### HMMs: Forward\-Backward
+
+Steps:  
+1. Find the sequences to get N \(or V, or whatever\) in position 2
+2. Find the sequences that carry on from N in position 2  
+Add them all up
+
+#### POS punch line
+
+* State\-of\-the\-art techniques achieve \> 98% accuracy on news
+* Average POS tagging disagreement amongst expert human judges for the Penn Treebank was 3.5%
+* POS tagging in resource poor languages is harder \(\~87%\)
+* POS tagging for Tweets is harder \(state\-of\-the art \~88%\)
+
+#### Sequence tagging problems
+
+* Many problems in NLP have data which is a sequence of characters, words, phrases, lines, or sentences ...
+* We can think of our task as one of labeling each item in order
+
+#### Other ML Sequence Models
+
+* Chain Conditional Random Fields
+	* Generalization of logistic regression to sequences
+	* Easy to incorporate arbitrary features \(e.g. Capitalization\)
+	* Works well with limited amounts of data
+	* Most widely used sequence labeling algorithm \(for now\)
+* Neural\-network based sequence models
+	* Recurrent Neural Networks \(RNNs\)  \(e.g. Long\-short\-term memory \(LSTM\) models\)
+	* ’en vogue’ as the current hot way to do things – but requires lots of data
+	* Packages – Standard in deep learning \(Tensorflow, CNTK, PyTorch\)
+
+#### Why do we care about this syntactic structure?
+
+* Many aspects of meaning can be learnt using the syntactic structure
+	* The NP preceding VP is likely the subject of the action
+	* The NP following the VP is likely the object of the action
+* Knowing basic units is helpful in modeling language
+	* You can use this to predict or complete the sentence \(language modeling\)
+	* Re\-organize sentences or simplify them \(summarization\)
+
+#### Parsing: Overview
+
+* Types of Parsing:
+	* Constituency / phrase-structure
+	* Dependency
+	* Semantic / frame
+* Parsing Techniques / Algorithms:
+	* Transition\-based
+	* Graph\-based
+	* Chart\-based
+
+* Similar goal: Find the best tree. 
+* Different formalisms, but similar algorithms used for all types.
+
+##### Dependency Parsing
+
+* Given a sentence, draw edges between pairs of words, and label them
+	* Result should be a tree
+	* The edge\-labels between word pairs should convey the correct syntactic relation
+* Parsing
+	* Not a single formalism / correct answer
+	* Methods work regardless: just need training data
+
+**Formal definition of Dependency Parsing**
+
+Formally, a dependency structure for a given sentence is a directed graph originating out of a unique and artificially inserted root node, which we always insert as the left most word.
+
+* In the most common case, every valid dependency graph has the following properties
+	* It is weakly connected \(replacing its edges with undirected edges results in connected graph\)
+	* Each word has exactly one incoming edge in the graph \(except the root, which has no incoming edge\)
+	* Acyclic
+
+##### Transition Based Parsing
+
+* Imagine a machine that has a stack and a buffer
+* It makes arc decisions about entries in the top of the stack and buffer
+* Keeps shifting words from the buffer until all words are consumed
+
+* Mechanism: build parse tree by sequence of actions \(transitions\)
+* Set\-up \(state\):
+	* A buffer initialized with the words
+	* A stack to store state:
+		* Words under consideration for more edges
+	* Dependency arcs \(edges\)
+		* The partially\-constructed tree
+* Arc\-Standard parsing:
+	* Shift: pop from buffer, push to stack
+	* Left\-arc: add left edge
+	* Right\-arc: add right edge
+
+* “Shift\-reduce” parsing:
+	* Shift: \(shift\) move from buffer to stack
+	* Reduce: \(left\-arc, right\-arc\) add edges, and remove elements from stack
+
+* For N tokens:
+	* O\(N\) shift operations \(one for each token\)
+	* O\(N\) reduce operations \(one for each edge\)
+
+_O\(N\) = linear time parsing!_
+
+Actions are irreversible! Cannot undo with other transitions  
+* Corollary: must choose correct* action every time!
+
+##### How to choose transitions?
+
+* Multi\-class prediction
+	* Inputs: state = \{stack, buffer, other features\}
+	* Targets: transitions = \{shift, left\-arc, right\-arc\}
+* Classifier: score\(a<sub>i</sub> \| state<sub>i</sub>\) at step i
+	* Rule\-based, SVM, NN, etc.
+* Training:
+	* Predict “gold” actions \(from true tree\)
+	* Or: “dynamic oracle” rewards good actions
+
+#### Parsing Summary
+
+* Syntactic parsing aims to find phrase\-structure in sentences and word\-word relations
+
+* Dependency parsing
+	* Word\-word relations e.g., nsubj\(ate, Elephant\)
+	* Parsing generates dependency trees by predicting edges or pruning edges
+	* Transition\-based parsing formulates edge prediction as a classification task
+		* Predict one of four actions to take next
+
+* Parsing is a widely used step in constructing deeper, semantic representations
+
+#### NLP Summary
+
+* NLP provides us with tools to model language beyond simple lexical \(word\) features
+* Sequence models like HMMs and CRFs allow us to label break apart patterns in language
+	* Part\-of\-speech tags
+	* Sentence or word breaks
+	* Patterns in language discourse \(your coursework!\)
+* Tree structured prediction
+	* Predict complex patterns in language \(We saw dependency parsing\)
+	* Critical for advanced applications \(QA, Dialogue Systems, etc.\)
+
+## Week 8
+
+#### Representations of a word
+
+* Up until now, we have learnt we can represent words as Vectors learning from its context:
+* However we have a problem:
+	* The same vector representation for a word regardless its current context
+* We just have one representation for a word, but words have different aspects, including semantics, syntactic behavior, and register/connotations
+
+#### Intro to RNNs \(Recurrent Neural Networks\)
+
+* RNNs solve this by having a “memory” state
+* As inputs are passed to the RNN the memory is updated to remember what it has seen
+* Memory states are passed as input progresses
+
+#### LSTM: Long Short Term Memory RNN
+
+* The Gate of Forgetting
+	* What past hidden state is worth keeping \(still relevant\) or no: \(0 forget \- 1 keep\) * past
+* The Gate of Input
+	* What past hidden state will be useful to figure out this input? Input \+ \(remembered past\)
+* The Gate of Output
+	* What out of past state \+ this current input will be useful later?
+
+#### What is ELMo?: Language Modeling task
+
+* ELMo’s use comes from its pre\-training
+* Train on a large dataset of unlabeled text
+* The pre\-training task is Language Modeling
+* A language Model predicts the probability of the next word given context
+
+##### ELMo specifics
+
+* ELMo reads in words as character n\-grams
+* The learning objective is modeling language bidirectionally
+* Once trained, weights are “frozen”, but still providing contextual information
+
+#### RNNs have trouble remembering
+
+* Even with dedicated memory cells like LSTMs and GRUs, path length between cells grows with sequence length
+* This means RNNs on their own can’t remember for very long
+* Trouble with long term dependencies
+
+#### Motivation for transformers
+
+* We want parallelization but RNNs are inherently sequential
+* RNNs need attention mechanism to deal with long range dependencies
+	* path length between states grows with sequence length
+
+#### Attention: selectively weighting words
+
+* Objective: have all context words in the input selectively influence the embedding of a target word
+* We are showing self-attention here: all words are being influenced by all others in the same input
+* The target word is the “query”, context words are “keys”
+
+#### Enhancing RNNs with attention
+
+* W<sub>q</sub> & W<sub>k</sub> are trainable weight matrices
+* They have been trained by the attention mechanisms
+
+* Sum all weighted hidden states together to get the contextual embedding C<sub>3</sub>
+* a<sub>t</sub> are the attention scalars used to weigh each state
+* THey are the same for all computations of attention in a single pass
+
+* Attention layers can be stacked
+* Simulates a deeper network
+
+#### Transformer Overview
+
+* Non\-recurrent sequence\-to\-sequence encoder\-decoder model
+* Good for GPU parallelisation
+* Task: machine translation
+* Data: parallel sentences in each language
+
+#### BERT’s preprocessing:
+
+* Custom Tokeniser: Bert will generate embeddings for words and subwords. E.g.:
+	* Disable =\> di, ##sable
+* Custom tags:
+	* \[CLS\] <\- Indicates this is classification task, always the first sentence element
+	* \[SEP\] <\- Separates sentences, and marks the end of a sentence
+
+* Preprocessing of “Disable the screensaver” : 
+
+\[CLS\], 'di', '##sable', 'the', 'screens', '##aver', \[SEP\]
+
+#### BERT: Just a Transformer encoder
+
+* BERT is trained using a modification on the original Language Modeling task: Masked Language Modeling
+	* Hide 15% of words from the input and try to predict them
+* Inherently bi\-directional since attentionallows all words to contribute to the prediction
+* BERT uses next\-sentence prediction as a secondary task
+
+#### Contextual embedding summary
+
+* Shift from context\-free models to contextual models based on language modeling \(predicting sequences of words\)
+* ELMo representations are:
+	* Contextual: The representation for each word depends on the previous words
+	* Character based: Purely character based, allowing the network to use morphological clues to form robust representations for out-of-vocabulary tokens unseen in training
+* BERT representations
+	* Bi\-directional context
+	* Based on Words \+ character n\-grams
+	* Seq2Seq models: Transformer model \+ attention
+	* Extensible: Extendable to a classifier / ranking model
+
+## Week 9
+
+#### Goals of information extraction
+
+* Organize information so that it is useful to people 
+	* Info boxes in Wikipedia 
+	* Summary of facts across an entire collections of news
+* Organize information so that it is useful for machine algorithms 
+	* Data analytics 
+	* Question answering 
+
+#### What is Information Extraction \(IE\)? 
+
+* Goal: Discover/extract structured information from text 
+* How: by mining lots of information from a corpus 
+* “Machine reading” of text
+
+Information extraction = segmentation \+ classification \+ association \+ clustering
+
+* IE = extracting information from text 
+	* Clear, factual information 
+	* Often: <\subject\> <\relation\> <\object\> RDF triples 
+	* Ex: <Lithospermum radix\> <\contains\_compound\> <\beta\-HIVS\>
+* Extract entities 
+	* Example: proteins, plant, chemical, diseases, medicines, ... 
+	* E.g.: trap1\(protein\), Lithosperm radix \(plant\), beta\-HIVS \(chemical\) 
+* Extract the relations between entities 
+	* E.g. contains, is\_a, regulates, causes, interacts\_with, ... 
+* Figure out the larger events that are taking place 
+	* Cancer cell death occurs as part of a medical treatment
+
+#### Information Extraction pipeline 
+
+* Named Entity Recognition \- Detect and classify entities
+* Coreference resolution \- Resolve pronouns to named entities
+* Entity Resolution \(linking\) 
+	* Ground entities to a representation of ‘world’ knowledge
+* Relation Extraction - Classify relationships between entities 
+
+#### Coreference Resolution
+
+* Goal: resolve different mentions of the same entity 
+	* Mention: a single “chunk” \(often a noun phrase\)
+	* Entity: a grounded “thing”
+
+#### Coreference Process
+
+* Detect the mentions
+* Cluster the mentions
+	* what mention relates to what entity
+
+#### Mention detection 
+
+* Three kinds of mentions: 
+	* Pronouns
+		* I, your, it, she, him, etc.
+		* Use a PoS tagger 
+	* Named entities 
+		* People, places, etc.
+		* NER tagger
+	* Noun phrases 
+		* “a dog,” “the big fluffy cat stuck in the tree”
+		* Use a parser 
+
+#### Linguistics note on coreference Resolution 
+
+* Coreference is when two mentions refer to the same entity in the world 
+	* Anaphora: expression depends on antecedent
+		* “Sally arrived, but nobody saw her” 
+	* Cataphora: expression depends in postcedent 
+		* “Before her arrival, nobody saw Sally”
+* Exophora: external context \(maybe unresolved\) 
+	* “He was standing over there”
+
+#### Four models for Coreference
+
+* Rule\-based \(pronominal anaphora resolution\) 
+* Mention Ranking 
+* Mention Pair 
+* Clustering
+
+#### Rule\-based
+
+* Hobbs \(1978\) proposes an algorithm that searches parse trees for antecedents of a pronoun
+* Starting at the NP node immediately dominating the pronoun 
+* Search previous trees, in order of recency, left\-to\-right, breadth\-first
+* Looking for the first match of the correct gender and number \(male\-female/sing ular\-plural\)
+
+##### Coreference Resolution Problems
+
+_Hard cases require nuanced semantic understanding of the world._
+
+#### Pairwise coreference model 
+
+Task: Given a mention \(m<sub>i</sub>\) and earlier mentions \(m<sub>1</sub>, … m<sub>i\-1</sub>\) classify whether it refers to each earlier entity or not \(m<sub>i</sub> == m<sub>j</sub>\) given the surrounding context. 
+
+This is a Binary classification problem
+
+* Mention Pair models 
+	* Create a coreference chain as a collection of pairwise mention links
+* Make independent pairwise decisions
+* Reconcile them in some deterministic way \(e.g., transitivity or greedy partitioning\) 
+	* A single mistake can lead to huge \(incorrect\) clusters
+
+#### Possible coreference features
+
+* Person/Number/Gender agreement 
+	* Jack gave Mary a gift. She was excited.
+* Semantic compatibility 
+	* ...the mining conglomerate...the company...
+* Certain syntactic constraints 
+	*  John bought him a new car. \[him can not be John\]
+* More recently mentioned entities preferred for referenced 
+	*  John went to a movie. Jack went as well. He was not busy.
+* Grammatical Role: Prefer entities in the subject position 
+	*  John went to a movie with Jack. He was not busy.
+* Parallelism: 
+	*  John went with Jack to a movie. Joe went with him to a bar.
+
+#### Mention ranking 
+
+* Assign each mention its highest scoring candidate antecedent according to the model
+* Dummy NA mention allows model to decline linking the current mention to anything \(“singleton” or “first” mention\)
+
+##### Ranking Model Inference 
+
+* Pretty much the same as mention\-pair model except each mention is assigned only one antecedent
+
+#### Ranking Model 
+
+* Standard feed\-forward neural network 
+	* Input layer: word embeddings and a few categorical features
+
+**Input Features**
+
+* Embeddings
+	* Previous two words, first word, last word, head word, ... of each mention
+		* The head word is the 'most important' word in the mention, can be found using a parser
+* Other features:
+	* Distance
+	* Document genre
+	* Speaker information
+
+#### End\-to\-End Model 
+
+* Base for current state\-of\-the\-art model for coreference resolution 
+* Mention ranking model 
+* Improvements over simple feed\-forward NN 
+	* Use an LSTM 
+	* Use attention 
+* Do mention detection and coreference end\-to\-end 
+	* No mention detection step! 
+	* Instead consider every span of text \(up to a certain length\) as a candidate mention 
+	* A span is just a contiguous sequence of words
+* Next, represent each span of text i going from START\(i\) to END\(i\) as a vector
+
+##### End\-to\-end Scoring
+
+* Score each pair of spans to decide if they are coreferent mentions
+* Scoring functions take the span representations as input
+	* May include multiplicative interactions between representations
+	* May include extra features
+
+#### Coreference clustering 
+
+* Start with each mention in it’s own singleton cluster 
+* Merge a pair of clusters at each step 
+* Use a model to score which cluster merges are good
+
+##### Intuition
+
+* Mention\-pair decision is difficult
+	* are Google and Google Plus coreferent?
+* Cluster\-pair decision is easier
+	* Are \[Google, the company\] and \[Google Plus, the product\] coreferent?
+
+##### Neural Model 
+
+Mention Pairs \-\> Mention\-Pair Representations \-\> Cluster\-Pair Representation \-\> Score
+
+##### Evaluation 
+
+* Many different metrics: MUC, CEAF, LEA, B\-CUBED, BLANC 
+	* Often report the average over a few different metrics
+
+* B\-Cubed \- for each mention, compute a precision and a recall 
+	* Precision: % of elements in a hypothesized reference chain that are in the true reference chain 
+	* Recall: % of elements in a true reference chain that are in the hypothesized reference chain 
+	* Overall precision & recall are the average of per\-chain precision & recall
+* Optimizing chain\-chain pairings is a hard problem 
+	* In the computational NP-hard sense – a greedy alignment is used
+
+#### CoRef in practice \- Spacy Coreference 
+
+* Rule\-based mention\-extraction
+* Scorer is a neural mention ranking model
+* Still has lots of heuristics in it
+
+#### Current SOTA: The time for BERT
+
+* Lee 2017 is the end\-to\-end neural mention base model 
+* Lee 2018 adds ELMO 
+* This adds BERT \+ a new objective
+
+#### SpanBert \(2019\) 
+
+* Objective: mask random contiguous spans, rather than random individual tokens 
+* Span\-Boundary Objective \(SBO\) \-  predict the entire masked span from the observed tokens at its boundary
+* Ranking model using BERT \+ hand\-engineered features \(Lee 2017 model\)
+
+## Week 10
+
+#### Information Extraction pipeline 
+
+* Named Entity Recognition \- Detect and classify entities
+* Coreference resolution \- Resolve pronouns to named entities
+* Entity Resolution \(linking\) 
+	* Ground entities to a representation of ‘world’ knowledge 
+	* China \(LOC\) 🡪 https://en.wikipedia.org/wiki/China 
+* Relation Extraction \- Classify relationships between entities 
+
+### Entity linking
+
+#### Entity ‘Grounding’
+
+* Low\-level NLP: everything ungrounded 
+	* Recall: manipulate text with parsing and part\-of\-speech, but no idea what it means
+* Information Extraction starts \(partly\) to resolve this 
+	* From strings to things
+* Deal with entities. Can ground to “real world” \(for example entries in Wikipedia\)
+
+#### Entity Linking 
+
+* Link detected entities in text to a knowledge base
+
+##### Formally
+
+* Named Entity Disambiguation \(NED\), Wikification
+	* Input a text document D = \{w<sub>1</sub>, ..., w<sub>n</sub>\} of words and a list of entity mentions M<sub>d</sub> = \{m<sub>1</sub>, ..., m<sub>n</sub>\}
+	* Output a list of mention\-entity pairs \{\(m<sub>i</sub>, e<sub>i</sub>\)\} for i in \[1, n\] where each entity is an entry in a knowledge base \(KB\) 
+
+#### It’s not as easy as it looks
+
+* Nested entity mentions 
+	* Four nested entities 
+	* Three layers deep
+* Slang entity mentions 
+	* \[McSame\], \[MCCane\], \[Obamessiah\], \[Nobama\], and \[uz\-becky\-beckybecky\-stan\-stan\] 
+	* Entity linking with Urban Dictionary \(Dalton, 2013\)
+
+#### Entity linking as retrieval
+
+* Given a mention, perform search over the KB to find candidates 
+	* Simple string name matching heuristics 
+	* Retrieval algorithm \(BM25, etc..\)
+* Optionally, re\-rank candidates 
+	* Possibly ‘collectively’ with evidence from all mentions in D
+
+#### Dense entity representations 
+
+* Zero\-shot Entity Linking with Dense Entity Retrieval \(Riedel 2019\) \[using BERT\]
+	* Learn a representation for each entity from text descriptions \(cache these\)
+	* Perform approximate “fuzzy” retrieval in dense vector space, score candidates
+
+### Relation Extraction
+
+* Parses text into structured relations to populate a database / knowledge base
+* Resource Description Framework \(RDF\) triples: 
+	*  <\subject\> <\relation\> <\object\> \[optional context\]
+
+#### Why is relation extraction difficult? 
+
+* Linguistic variability 
+	* President Barack Obama versus Barack Obama, president of the United States
+* Entity Ambiguity
+	* Apple produces seeds versus Apple produces iPhones
+* Implicit Relations
+	* Obama met with Putin in Moscow =\> Obama traveled to Moscow
+* Complex language with many clauses, long list of qualifiers, negations etc
+	* Pentoxifylline \(PTX\) affects many processes that may contribute to the pathogenesis of severe malaria and it has been shown to reduce the duration of coma in children with cerebral malaria
+
+#### Relations
+
+* Binary relation: relational triple \(e\_1, relation, e\_2\) 
+	* \(Barack Obama, place\-of\-birth, Honolulu\) 
+* Many relations are not binary: 
+	* “<\company\> appointed <\person\> as <\position\>”
+* But can decompose: 
+	* \(<\person\>, employed\-by, <\company\>\) 
+	* \(<\person\>, has\-job\-title, <\position\>\)
+	* \(<\company\>, uses\-job\-title, <\position\>\)
+
+#### Example Knowledge Bases
+
+* WordNet: low\-level semantic relations 
+	* Hypernymy: \(Giraffe, hyponym\-of, animal\) 
+	* Meronymy: \(leg, part\-of, chair\)
+* Freebase / Satori / Wikidata / Google Knowledge Graph: world knowledge 
+	* \(Fight Club, /film/film/starring, Brad Pitt\) 
+* UMLS – medical knowledge
+
+#### How to extract?
+
+* Basic task: 
+	* Find mentions of entities 
+	* Extract relations from the context of the mentions of the entities 
+		* “<\Barack Obama\> is the <\president\> of the <United States\>.” 
+		* \(Barack Obama, head\-of\-state, United States\)
+
+* Formulations: 
+	* Rule\-based    \(e.g. Hearst patterns\) 
+	* Supervised    \(extract & score\)
+	* Semi\-supervised    \(bootstrapping\)
+	* Unsupervised    \(clustering of patterns\)
+
+#### Extracting Richer Relations Using Rules
+
+* Intuition: relations often hold between specific entities 
+	* located\-in \(ORGANIZATION, LOCATION\) 
+	* founded \(PERSON, ORGANIZATION\) 
+	* cures \(DRUG, DISEASE\)
+* Start with Named Entity tags to help extract relation
+
+#### Supervised Relation Extraction
+
+* Find all pairs of named entities \(usually in same sentence\)
+* Decide if 2 entities are related
+* If yes, classify the relation
+
+* Why the 2nd step? 
+	* Faster classification training by eliminating most pairs 
+	* Can use distinct feature\-sets appropriate for each task
+
+#### Relation Extraction
+
+* What type of supervised task?
+* What is your learning model?
+* What are your features? 
+
+##### Features Example
+
+* American Airlines, a unit of AMR, immediately matched the move, spokesman Tim Wagner said
+	* employer\(American Airlines, Tim Wagner\)
+
+* Bag\-of\-words features 
+	* WM1 = \{American, Airlines\}, WM2 = \{Tim, Wagner\} 
+* Head\-word features 
+	* HM1 = Airlines, HM2 = Wagner, HM12 = Airlines\+Wagner
+* Words in between 
+	* WB\-NULL = false, WBF\-L = NULL, WBF = a, WBL = spokesman, WBO = \{unit, of, AMR, immediately, matched, the, move\}
+* Words before and after 
+	* BM1F = NULL, BM1L = NULL, AM2F = said, AM2L = NULL 
+
+#### Distant supervision
+
+* How do we scale relation extraction? 
+	* Don’t want to manually label millions of sentences with thousands of relations!
+* Distant supervision 
+	* Use an \(existing\) large database to get huge \# of examples 
+	* Create lots of features from all these examples 
+	* Combine in a supervised classifier
+
+#### Software tools 
+
+* Entity resolution \(linking\) 
+	* TagMe, DbPedia Spotlight, others…
+* Relation extraction 
+	* Stanford CoreNLP, DeepDive, Stanford MIMLE\-RE, UMass Factorie
+	* Many custom packages
+
+#### Result: Large\-scale knowledge bases
+
+* The result of extraction are facts that can be represented in a knowledge base
+* What can we do with these? 
+	* Monitor changes in the world \(for fun or profit!\) 
+	* Run structured database queries \(data analytics!\) 
+	* Answer questions! 
